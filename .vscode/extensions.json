@@ -1,0 +1,11 @@
+{
+    "recommendations": [
+        "bradlc.vscode-tailwindcss",
+        "esbenp.prettier-vscode",
+        "dbaeumer.vscode-eslint",
+        "christian-kohler.npm-intellisense",
+        "eamodio.gitlens",
+        "dsznajder.es7-react-js-snippets",
+        "lucide.lucide-react"
+    ]
+}

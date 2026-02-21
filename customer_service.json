@@ -1,0 +1,60 @@
+{
+  "curriculum": [
+    {
+      "id": "exp_01",
+      "level": "Experience",
+      "title": "체험 다이빙",
+      "price": { "standard": 75000, "weekday": 65000 },
+      "status": "ACTIVE"
+    },
+    {
+      "id": "lv_01",
+      "level": "Level 1",
+      "title": "입문 과정",
+      "certification": "AIDA1 / SSI BASIC",
+      "price": { "standard": 150000 },
+      "status": "ACTIVE"
+    },
+    {
+      "id": "lv_02",
+      "level": "Level 2",
+      "title": "초급 과정",
+      "certification": "AIDA2 / SSI FREEDIVER",
+      "price": { "standard": 400000 },
+      "status": "ACTIVE"
+    },
+    {
+      "id": "lv_03",
+      "level": "Level 3",
+      "title": "중급 과정",
+      "certification": "AIDA3 / SSI ADVANCED",
+      "price": { "standard": 550000 },
+      "status": "ACTIVE"
+    },
+    {
+      "id": "lv_04",
+      "level": "Level 4",
+      "title": "고급 과정",
+      "certification": "Master Freediver",
+      "price": { "label": "별도 문의" },
+      "status": "INQUIRY_ONLY"
+    }
+  ],
+  "admin_member_management": {
+    "core_fields": [
+      { "id": "current_progress", "label": "진행 중인 교육", "desc": "현재 수강 중인 코스명" },
+      { "id": "remaining_sessions", "label": "잔여 세션", "desc": "남은 풀장/해양 실습 횟수" },
+      { "id": "mileage", "label": "보유 마일리지", "unit": "point" }
+    ],
+    "technical_fields": [
+      { "id": "equalization", "label": "이퀄라이징", "options": ["발살바", "프렌젤", "마우스필"] },
+      { "id": "pb_records", "label": "PB 기록", "sub_fields": ["CWT(수심)", "STA(스테틱)", "DYN(잠영)"] },
+      { "id": "equipment", "label": "장비 보유", "options": ["전체 렌탈", "부분 보유", "개인 장비"] }
+    ],
+    "admin_fields": [
+      { "id": "cert_status", "label": "자격증 상태", "options": ["미발급", "서류대기", "발급완료"] },
+      { "id": "expiry_date", "label": "교육 만료일", "desc": "등록일 기준 6개월 자동 계산" },
+      { "id": "health_memo", "label": "건강 유의사항", "desc": "이퀄라이징 방해 요소 등 메모" }
+    ]
+  }
+}
