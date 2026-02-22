@@ -28,7 +28,7 @@ import {
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
-import { AlertCircle, Loader2, Search, UserPlus } from 'lucide-react'
+import { AlertCircle, Loader2, Search, UserPlus, Sparkles } from 'lucide-react'
 import { assignCourseToUser } from '@/app/admin/actions/course-enrollment'
 import { toast } from 'sonner'
 
@@ -190,7 +190,7 @@ export function ManualRegisterDialog({
               {selectedCourse.price?.standard > 0 && (
                 <div className="bg-blue-50 border border-blue-200 rounded p-2 mt-2">
                   <p className="text-xs font-medium text-blue-900">
-                    ✨ 자동으로 {selectedCourse.price.standard}크레딧이 지급됩니다
+                    <p className="flex items-center gap-1 text-sm text-green-600 mt-2"><Sparkles className="w-4 h-4" /> 자동으로 {selectedCourse.price.standard}크레딧이 지급됩니다</p>
                   </p>
                 </div>
               )}

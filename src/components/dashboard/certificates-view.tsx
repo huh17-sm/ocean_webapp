@@ -1,11 +1,14 @@
 'use client'
 
+import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { ArrowLeft, Award, Check, Clock, AlertCircle, Coins } from 'lucide-react'
+import { ArrowLeft, Award, Check, Clock, AlertCircle, Coins, Loader2 } from 'lucide-react'
 import { formatCredits } from '@/lib/credit-constants'
+import { useToast } from '@/hooks/use-toast'
+import { applyCertificate } from '@/app/admin/actions/certificates-v2'
 
 interface CertificatesViewProps {
   certificates: any[]
@@ -31,17 +34,52 @@ export function CertificatesView({
     .filter((cp) => {
       // 과정이 완료되었고
       const isCompleted = cp.status === 'completed'
-      // 해당 레벨의 자격증이 아직 발급되지 않았으면
+      // 해당 레벨의 자격증 발급이 진행 중이거나 완료되었으면
       const hasNoCertificate = !certificates.some(
-        (cert) => cert.course_level === cp.course_level && cert.status === 'issued'
+        (cert) => cert.course_level === cp.course_level && ['issued', 'pending', 'approved'].includes(cert.status)
       )
       return isCompleted && hasNoCertificate
     })
-    .map((cp) => ({
-      level: cp.course_level,
-      requiredCredits: getLevelCreditCost(cp.course_level),
-      canApply: userCredits >= getLevelCreditCost(cp.course_level),
-    }))
+    .map((cp) => {
+      const rejectedCert = certificates
+        .filter(cert => cert.course_level === cp.course_level && cert.status === 'rejected')
+        .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0];
+        
+      return {
+        level: cp.course_level,
+        requiredCredits: getLevelCreditCost(cp.course_level),
+        canApply: userCredits >= getLevelCreditCost(cp.course_level),
+        rejectionReason: rejectedCert?.rejection_reason || null
+      }
+    })
+
+  const [applyingLevel, setApplyingLevel] = useState<string | null>(null)
+  const [isPending, startTransition] = useTransition()
+  const { toast } = useToast()
+
+  const handleApply = (level: string, requiredCredits: number) => {
+    setApplyingLevel(level)
+    startTransition(async () => {
+      const result = await applyCertificate({
+        certificate_level: level,
+        credit_paid: requiredCredits
+      })
+
+      if (result.success) {
+        toast({
+          title: '자격증 신청 완료',
+          description: result.message,
+        })
+      } else {
+        toast({
+          title: '신청 실패',
+          description: result.message,
+          variant: 'destructive',
+        })
+      }
+      setApplyingLevel(null)
+    })
+  }
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -87,7 +125,10 @@ const router = useRouter()
           <ArrowLeft className="h-5 w-5" />
         </Button>
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-slate-900">🏆 자격증 관리</h1>
+          <h1 className="text-2xl md:text-3xl font-bold text-slate-900 flex items-center gap-2">
+            <Award className="h-6 w-6 text-amber-500" />
+            자격증 관리
+          </h1>
           <p className="text-slate-500 mt-1">자격증 신청 및 발급 내역을 관리하세요</p>
         </div>
       </div>
@@ -150,20 +191,40 @@ const router = useRouter()
           <CardContent>
             <div className="space-y-3">
               {availableLevels.map((level) => (
-                <div
-                  key={level.level}
-                  className="flex items-center justify-between p-4 border rounded-lg hover:bg-slate-50"
-                >
-                  <div>
-                    <p className="font-semibold text-slate-900">{level.level}</p>
-                    <p className="text-sm text-slate-600 flex items-center gap-1 mt-1">
-                      <Coins className="h-3 w-3" />
-                      필요 크레딧: {formatCredits(level.requiredCredits)}
-                    </p>
+                <div key={level.level} className="flex flex-col gap-3 p-4 border rounded-lg hover:bg-slate-50 transition-colors">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="flex items-center gap-2">
+                         <p className="font-semibold text-slate-900">{level.level}</p>
+                         {level.rejectionReason && <Badge variant="destructive" className="bg-red-100 text-red-700 hover:bg-red-200 border-0 h-5 px-1.5 text-[10px]">반려 기록 있음</Badge>}
+                      </div>
+                      <p className="text-sm text-slate-600 flex items-center gap-1 mt-1">
+                        <Coins className="h-3 w-3" />
+                        필요 크레딧: {formatCredits(level.requiredCredits)}
+                      </p>
+                    </div>
+                    <Button 
+                      size="sm" 
+                      disabled={!level.canApply || isPending}
+                      onClick={() => handleApply(level.level, level.requiredCredits)}
+                      className={level.rejectionReason && level.canApply ? "bg-red-600 hover:bg-red-700 text-white" : ""}
+                    >
+                      {isPending && applyingLevel === level.level ? (
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      ) : null}
+                      {level.canApply ? (level.rejectionReason ? '재신청하기' : '신청하기') : '크레딧 부족'}
+                    </Button>
                   </div>
-                  <Button size="sm" disabled={!level.canApply}>
-                    {level.canApply ? '신청하기' : '크레딧 부족'}
-                  </Button>
+                  
+                  {level.rejectionReason && (
+                    <div className="bg-red-50/80 border border-red-100 text-red-800 text-sm p-3 rounded-md flex items-start gap-2 shadow-sm">
+                       <AlertCircle className="w-4 h-4 mt-0.5 shrink-0 text-red-600" />
+                       <div className="leading-snug flex-1">
+                         <span className="font-bold block mb-1 text-red-900">이전 신청 반려 사유</span>
+                         {level.rejectionReason}
+                       </div>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>

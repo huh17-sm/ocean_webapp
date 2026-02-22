@@ -223,19 +223,26 @@ export async function saveDebriefingBulk(
 
     for (const input of inputs) {
       try {
-        // 2-1. 출석 처리 (mark_attended가 true인 경우)
-        if (input.mark_attended) {
+        // 2-1. 출석 처리/취소
+        if (input.mark_attended !== undefined) {
           const { data: reservation } = await supabaseAdmin
             .from('reservations')
             .select('status')
             .eq('id', input.reservation_id)
             .single()
 
-          if (reservation && reservation.status === 'confirmed') {
-            await supabaseAdmin
-              .from('reservations')
-              .update({ status: 'attended' })
-              .eq('id', input.reservation_id)
+          if (reservation) {
+            if (input.mark_attended && reservation.status === 'confirmed') {
+              await supabaseAdmin
+                .from('reservations')
+                .update({ status: 'attended' })
+                .eq('id', input.reservation_id)
+            } else if (!input.mark_attended && reservation.status === 'attended') {
+              await supabaseAdmin
+                .from('reservations')
+                .update({ status: 'confirmed' })
+                .eq('id', input.reservation_id)
+            }
           }
         }
 

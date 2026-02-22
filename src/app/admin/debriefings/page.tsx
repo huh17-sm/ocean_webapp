@@ -35,7 +35,8 @@ export default async function AdminDebriefingsPage() {
 
   const { data: classes } = await supabaseAdmin
     .from('classes')
-    .select('id, date, time, type, location')
+    .select('id, date, time, type, location, is_completed')
+    .eq('is_completed', true)
     .gte('date', thirtyDaysAgo.toISOString().split('T')[0])
     .order('date', { ascending: false })
     .order('time', { ascending: false })

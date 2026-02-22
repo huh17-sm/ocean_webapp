@@ -168,7 +168,7 @@ export function CertificatesManagement({
     if (!selectedCert || !certificateNumber) {
       toast({
         title: '입력 오류',
-        description: '자격증 번호를 입력해주세요.',
+        description: '자격증 레벨을 입력해주세요.',
         variant: 'destructive',
       })
       return
@@ -484,11 +484,11 @@ export function CertificatesManagement({
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div>
-              <Label>자격증 번호 *</Label>
+              <Label>자격증 레벨 *</Label>
               <Input
                 value={certificateNumber}
                 onChange={(e) => setCertificateNumber(e.target.value)}
-                placeholder="예: FD-2026-001"
+                placeholder="예: 아이다2"
               />
             </div>
             <div>
@@ -572,7 +572,7 @@ function CertificateCard({
             </div>
             {certificate.certificate_number && (
               <div>
-                <span className="text-slate-600">자격증 번호:</span>
+                <span className="text-slate-600">자격증 레벨:</span>
                 <p className="font-medium">{certificate.certificate_number}</p>
               </div>
             )}

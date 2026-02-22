@@ -396,8 +396,10 @@ export async function createCourse(formData: FormData) {
     const credits = formData.get('credits') ? parseInt(formData.get('credits') as string) : null
     const sessionCount = formData.get('session_count') ? parseInt(formData.get('session_count') as string) : 1
     const featuresString = formData.get('features') as string
+    const requiredSkillsString = formData.get('required_skills') as string
 
     const features = featuresString ? JSON.parse(featuresString) : []
+    const requiredSkills = requiredSkillsString ? JSON.parse(requiredSkillsString) : []
 
     const { error } = await supabase.from('courses').insert({
         id: id || crypto.randomUUID(),
@@ -408,6 +410,7 @@ export async function createCourse(formData: FormData) {
         price: { standard: priceStandard, credits },
         session_count: sessionCount,
         features,
+        required_skills: requiredSkills,
         curriculum_details: [],
         requirements: {},
         icon: 'Waves'
@@ -433,8 +436,10 @@ export async function updateCourse(courseId: string, formData: FormData) {
     const credits = formData.get('credits') ? parseInt(formData.get('credits') as string) : null
     const sessionCount = formData.get('session_count') ? parseInt(formData.get('session_count') as string) : 1
     const featuresString = formData.get('features') as string
+    const requiredSkillsString = formData.get('required_skills') as string
 
     const features = featuresString ? JSON.parse(featuresString) : []
+    const requiredSkills = requiredSkillsString ? JSON.parse(requiredSkillsString) : []
 
     const { error } = await supabase.from('courses').update({
         title,
@@ -443,7 +448,8 @@ export async function updateCourse(courseId: string, formData: FormData) {
         status,
         price: { standard: priceStandard, credits },
         session_count: sessionCount,
-        features
+        features,
+        required_skills: requiredSkills
     }).eq('id', courseId)
 
     if (error) {
@@ -730,14 +736,46 @@ export async function updateClassMediaLink(
 }
 
 /**
+ * 수업 완료 상태 토글
+ */
+export async function updateClassCompletion(
+    classId: string,
+    isCompleted: boolean
+): Promise<{ success?: boolean; error?: string }> {
+    const supabaseAdmin = getSupabaseAdmin()
+
+    const { error } = await supabaseAdmin
+        .from('classes')
+        .update({ is_completed: isCompleted })
+        .eq('id', classId)
+
+    if (error) {
+        console.error('Error updating class completion:', error)
+        return { error: '수업 완료 상태 변경에 실패했습니다.' }
+    }
+
+    revalidatePath('/admin/classes/availability')
+    revalidatePath('/admin/classes')
+    return { success: true }
+}
+
+/**
  * 수강생 디브리핑 저장
  */
 export async function saveDebriefing(
     reservationId: string,
     debriefing: string
 ): Promise<{ success?: boolean; error?: string }> {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user) {
+        return { error: '로그인이 필요합니다.' }
+    }
+
     const supabaseAdmin = getSupabaseAdmin()
 
+    // 1. 기존 방식대로 reservations 테이블에 저장 (관리자 모달 UI 유지)
     const { error } = await supabaseAdmin
         .from('reservations')
         .update({
@@ -747,11 +785,39 @@ export async function saveDebriefing(
         .eq('id', reservationId)
 
     if (error) {
-        console.error('Error saving debriefing:', error)
+        console.error('Error saving debriefing to reservations:', error)
         return { error: '디브리핑 저장에 실패했습니다.' }
     }
 
+    // 2. 신규 사용자 화면용 debriefings 테이블에 동기화 저장
+    const { data: existing } = await supabaseAdmin
+        .from('debriefings')
+        .select('id')
+        .eq('reservation_id', reservationId)
+        .maybeSingle()
+
+    if (existing) {
+        // 이미 데이터가 있으면 수행 평가(performance) 영역만 업데이트
+        await supabaseAdmin
+            .from('debriefings')
+            .update({
+                performance: debriefing || null,
+                instructor_id: user.id
+            })
+            .eq('id', existing.id)
+    } else if (debriefing) {
+        // 데이터가 없고 내용이 있을 때만 새로 생성
+        await supabaseAdmin
+            .from('debriefings')
+            .insert({
+                reservation_id: reservationId,
+                instructor_id: user.id,
+                performance: debriefing || null
+            })
+    }
+
     revalidatePath('/admin/classes/availability')
+    revalidatePath('/dashboard/debriefings') // 사용자 대시보드 강제 반영
     return { success: true }
 }
 
@@ -791,6 +857,46 @@ export async function completeReservation(
 
     if (updateError) {
         return { error: '출석 처리 중 오류가 발생했습니다.' }
+    }
+
+    revalidatePath('/admin/classes')
+    revalidatePath('/admin/classes/availability')
+    revalidatePath('/dashboard')
+
+    return { success: true }
+}
+
+/**
+ * 관리자가 예약을 출석 취소 처리 (상태를 'confirmed'로 변경)
+ */
+export async function cancelReservationCompletion(
+    reservationId: string
+): Promise<{ success?: boolean; error?: string }> {
+    const supabaseAdmin = getSupabaseAdmin()
+
+    // 1. 예약 정보 조회
+    const { data: reservation, error: fetchError } = await supabaseAdmin
+        .from('reservations')
+        .select('id, status')
+        .eq('id', reservationId)
+        .single()
+
+    if (fetchError || !reservation) {
+        return { error: '예약 정보를 찾을 수 없습니다.' }
+    }
+
+    if (reservation.status !== 'attended') {
+        return { error: '출석 완료 처리된 예약만 취소할 수 있습니다.' }
+    }
+
+    // 2. 상태를 confirmed로 변경
+    const { error: updateError } = await supabaseAdmin
+        .from('reservations')
+        .update({ status: 'confirmed' })
+        .eq('id', reservationId)
+
+    if (updateError) {
+        return { error: '출석 취소 중 오류가 발생했습니다.' }
     }
 
     revalidatePath('/admin/classes')

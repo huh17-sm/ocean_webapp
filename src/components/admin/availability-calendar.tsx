@@ -35,6 +35,7 @@ export interface ClassData {
     title?: string
     media_link?: string | null
     created_at?: string
+    is_completed?: boolean
 }
 
 interface AvailabilityBlock {

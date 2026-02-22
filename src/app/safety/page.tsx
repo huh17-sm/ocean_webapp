@@ -1,5 +1,6 @@
 import { Metadata } from 'next'
 import { PolicyLayout } from '@/components/layout/policy-layout'
+import { AlertTriangle } from 'lucide-react'
 
 export const metadata: Metadata = {
   title: '안전 고지사항 - Ocean Freediving',
@@ -10,8 +11,8 @@ export default function SafetyPage() {
   return (
     <PolicyLayout title="안전 고지사항" lastUpdated="2026년 2월 11일">
       <div className="space-y-6">
-        <div className="text-center py-12">
-          <div className="text-6xl mb-4">⚠️</div>
+        <div className="text-center py-12 flex flex-col items-center">
+          <AlertTriangle className="h-16 w-16 text-orange-500 mb-4" />
           <h2 className="text-2xl font-bold text-slate-900 mb-2">프리다이빙 안전 고지사항</h2>
           <p className="text-slate-600">
             현재 안전 고지사항을 작성 중입니다.

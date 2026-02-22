@@ -1,5 +1,6 @@
 import { Metadata } from 'next'
 import { PolicyLayout } from '@/components/layout/policy-layout'
+import { Shield } from 'lucide-react'
 
 export const metadata: Metadata = {
   title: '개인정보처리방침 - Ocean Freediving',
@@ -10,8 +11,8 @@ export default function PrivacyPage() {
   return (
     <PolicyLayout title="개인정보처리방침" lastUpdated="2026년 2월 11일">
       <div className="space-y-6">
-        <div className="text-center py-12">
-          <div className="text-6xl mb-4">🔒</div>
+        <div className="text-center py-12 flex flex-col items-center">
+          <Shield className="h-16 w-16 text-slate-700 mb-4" />
           <h2 className="text-2xl font-bold text-slate-900 mb-2">개인정보처리방침</h2>
           <p className="text-slate-600">
             현재 개인정보처리방침을 작성 중입니다.

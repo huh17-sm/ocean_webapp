@@ -125,7 +125,10 @@ export function ProfileView({ profile, user }: ProfileViewProps) {
           </Button>
         </Link>
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-slate-900">👤 프로필 및 설정</h1>
+          <h1 className="text-2xl md:text-3xl font-bold text-slate-900 flex items-center gap-2">
+            <User className="h-6 w-6 text-blue-500" />
+            프로필 및 설정
+          </h1>
           <p className="text-slate-500 mt-1">내 정보를 관리하세요</p>
         </div>
       </div>

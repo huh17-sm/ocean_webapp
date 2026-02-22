@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
+import { TimePicker } from "@/components/ui/time-picker"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Clock, MapPin, Users, Plus, Calendar as CalendarIcon, Send, ChevronLeft, ChevronRight, Link as LinkIcon } from "lucide-react"
 import { format, isSameDay, parseISO, startOfToday, addMonths, subMonths } from 'date-fns'
@@ -50,13 +51,15 @@ export default function ClassCalendarView({
     userCredits,
     blockedPeriods = [],
     pools = [],
-    classTypeSettings = []
+    classTypeSettings = [],
+    userReservedClassIds = []
 }: {
     initialClasses: ClassData[],
     userCredits: number,
     blockedPeriods?: AvailabilityBlock[],
     pools?: Pool[],
-    classTypeSettings?: ClassTypeSetting[]
+    classTypeSettings?: ClassTypeSetting[],
+    userReservedClassIds?: string[]
 }) {
     const { confirm } = useConfirm()
 
@@ -350,7 +353,9 @@ export default function ClassCalendarView({
 
                     {classesByDate.length > 0 ? (
                         <div className="space-y-4">
-                            {classesByDate.map((cls) => (
+                            {classesByDate.map((cls) => {
+                                const isReserved = userReservedClassIds.includes(cls.id);
+                                return (
                                 <Card key={cls.id} className="overflow-hidden border-none shadow-md hover:shadow-xl transition-all duration-300 group ring-1 ring-slate-100">
                                     <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-linear-to-b from-blue-400 to-blue-600 group-hover:w-2 transition-all"></div>
                                     <div className="p-5 pl-7 flex flex-col gap-4">
@@ -370,16 +375,18 @@ export default function ClassCalendarView({
                                             </div>
                                              <Button
                                                 onClick={() => handleReserve(cls.id, cls.type)}
-                                                disabled={isReserving === cls.id || (cls.current_enrollment >= cls.max_capacity)}
+                                                disabled={isReserved || isReserving === cls.id || (cls.current_enrollment >= cls.max_capacity)}
                                                 size="sm"
                                                 className={cn(
                                                     "rounded-full px-5 font-semibold shadow-lg shadow-blue-200/50",
+                                                    isReserved ? "bg-slate-200 text-slate-500 cursor-not-allowed shadow-none" :
                                                     isReserving === cls.id ? "bg-slate-100 text-slate-400" :
                                                     cls.current_enrollment >= cls.max_capacity ? "bg-slate-100 text-slate-400" :
                                                     "bg-blue-600 hover:bg-blue-700 text-white"
                                                 )}
                                             >
-                                                {isReserving === cls.id ? '처리 중' :
+                                                {isReserved ? '예약 완료' :
+                                                    isReserving === cls.id ? '처리 중' :
                                                     cls.current_enrollment >= cls.max_capacity ? '마감됨' : '예약'}
                                             </Button>
                                         </div>
@@ -436,7 +443,7 @@ export default function ClassCalendarView({
                                         </div>
                                     </div>
                                 </Card>
-                            ))}
+                            )})}
 
                             {/* Request Button */}
                             <div className="pt-2">
@@ -527,11 +534,9 @@ export default function ClassCalendarView({
 
                                 <div className="grid gap-2">
                                     <Label htmlFor="time">희망 시간</Label>
-                                    <Input
-                                        id="time"
-                                        type="time"
+                                    <TimePicker
                                         value={reqTime}
-                                        onChange={(e) => setReqTime(e.target.value)}
+                                        onChange={setReqTime}
                                     />
                                 </div>
                             </>

@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/select"
 import { UserProfile } from '@/types'
 import { updateUserProfile } from '@/app/admin/actions'
-import { Loader2 } from 'lucide-react'
+import { Loader2, FileText } from 'lucide-react'
 
 interface UserDetailFormProps {
     user: UserProfile
@@ -176,7 +176,7 @@ export function UserDetailForm({ user, onCancel, onSuccess }: UserDetailFormProp
 
                 {/* 3. User Info */}
                 <div className="space-y-4 border p-4 rounded bg-white/50">
-                    <h4 className="font-semibold text-sm text-blue-600">📋 회원 정보</h4>
+                    <h4 className="font-semibold text-sm text-blue-600 flex items-center gap-1"><FileText className="w-4 h-4" /> 회원 정보</h4>
                     <div className="space-y-3">
                         <div className="space-y-1">
                             <Label>이름 (수정불가)</Label>

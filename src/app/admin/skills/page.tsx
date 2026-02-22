@@ -2,6 +2,7 @@ import { createClient } from '@/utils/supabase/server'
 import { redirect } from 'next/navigation'
 import { SkillManagementTable } from '@/components/admin/skill-management-table'
 import { CourseProgressManagement } from '@/components/admin/course-progress-management'
+import { CheckCircle2, BookOpen } from 'lucide-react'
 
 // 캐싱 방지
 export const dynamic = 'force-dynamic'
@@ -47,13 +48,17 @@ export default async function AdminSkillsPage() {
       <div className="space-y-8">
         {/* 스킬 체크 관리 */}
         <section>
-          <h2 className="text-2xl font-semibold mb-4">✅ 스킬 체크</h2>
+          <h2 className="text-2xl font-semibold mb-4 flex items-center gap-2">
+            <CheckCircle2 className="h-6 w-6 text-green-500" /> 스킬 체크
+          </h2>
           <SkillManagementTable students={students || []} />
         </section>
 
         {/* 코스 진도 관리 */}
         <section>
-          <h2 className="text-2xl font-semibold mb-4">📚 코스 진도 관리</h2>
+          <h2 className="text-2xl font-semibold mb-4 flex items-center gap-2">
+            <BookOpen className="h-6 w-6 text-blue-500" /> 코스 진도 관리
+          </h2>
           <CourseProgressManagement students={students || []} />
         </section>
       </div>

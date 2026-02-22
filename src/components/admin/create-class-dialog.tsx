@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { TimePicker } from '@/components/ui/time-picker'
 import {
     Select,
     SelectContent,
@@ -74,13 +75,7 @@ export function CreateClassDialog() {
                         <Label htmlFor="time" className="text-right">
                             시간
                         </Label>
-                        <Input
-                            id="time"
-                            name="time"
-                            type="time"
-                            required
-                            className="col-span-3"
-                        />
+                        <TimePicker name="time" required defaultValue="10:00" className="col-span-3" />
                     </div>
                     <div className="grid grid-cols-4 items-center gap-4">
                         <Label htmlFor="type" className="text-right">

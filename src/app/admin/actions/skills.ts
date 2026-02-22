@@ -599,3 +599,93 @@ export async function getStudentCourseProgress(userId: string) {
 
   return data || []
 }
+
+// ============================================
+// 6. 스킬 메모 관리 (관리자용)
+// ============================================
+
+export interface UpdateSkillNoteInput {
+  user_id: string
+  course_level: string
+  skill_type: 'static' | 'dynamic' | 'depth' | 'rescue' | 'theory'
+  notes: string
+}
+
+/**
+ * 강사/관리자가 스킬에 메모(노트)를 추가/수정 (완료 여부와 무관)
+ */
+export async function updateSkillNote(
+  input: UpdateSkillNoteInput
+): Promise<{ success: boolean; message: string }> {
+  const supabase = await createClient()
+  const supabaseAdmin = getSupabaseAdmin()
+
+  try {
+    // 1. 강사/관리자 권한 확인
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+
+    if (!user) {
+      return { success: false, message: '로그인이 필요합니다.' }
+    }
+
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .single()
+
+    if (!profile || !['instructor', 'admin'].includes(profile.role)) {
+      return { success: false, message: '강사 또는 관리자 권한이 필요합니다.' }
+    }
+
+    // 2. 기존 기록 확인
+    const { data: existing, error: findError } = await supabaseAdmin
+      .from('skill_completions')
+      .select('id')
+      .eq('user_id', input.user_id)
+      .eq('course_level', input.course_level)
+      .eq('skill_type', input.skill_type)
+      .maybeSingle()
+
+    if (findError) {
+      return { success: false, message: `스킬 조회 실패: ${findError.message}` }
+    }
+
+    if (existing) {
+      // 기존 레코드에 메모만 업데이트
+      const { error: updateError } = await supabaseAdmin
+        .from('skill_completions')
+        .update({ notes: input.notes })
+        .eq('id', existing.id)
+
+      if (updateError) {
+        return { success: false, message: `메모 업데이트 실패: ${updateError.message}` }
+      }
+    } else {
+      // 레코드가 없으면 미완료 상태로 레코드 생성 후 메모 저장
+      const { error: createError } = await supabaseAdmin
+        .from('skill_completions')
+        .insert({
+          user_id: input.user_id,
+          course_level: input.course_level,
+          skill_type: input.skill_type,
+          is_completed: false,
+          notes: input.notes,
+        })
+
+      if (createError) {
+        return { success: false, message: `메모 생성 실패: ${createError.message}` }
+      }
+    }
+
+    revalidatePath('/admin')
+    revalidatePath('/dashboard')
+
+    return { success: true, message: '메모가 저장되었습니다.' }
+  } catch (error) {
+    console.error('Error in updateSkillNote:', formatError(error))
+    return { success: false, message: '메모 저장 중 오류가 발생했습니다.' }
+  }
+}

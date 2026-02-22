@@ -88,6 +88,7 @@ export interface ReservationWithClass {
     location: string | null;
     current_enrollment: number;
     media_link: string | null;
+    is_completed: boolean;
   } | null;
 }
 

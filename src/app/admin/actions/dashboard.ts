@@ -1,6 +1,7 @@
 'use server'
 
 import { createClient } from '@/utils/supabase/server'
+import { requireAdmin } from '@/app/admin/utils/auth'
 
 export interface PendingRequest {
   id: string
@@ -37,7 +38,21 @@ export interface DashboardStats {
 }
 
 export async function getAdminDashboardStats(): Promise<DashboardStats> {
-  const supabase = await createClient()
+  let supabase
+  try {
+    const result = await requireAdmin()
+    supabase = result.supabase
+  } catch (error) {
+    console.error('Admin authentication failed:', error)
+    return {
+      todayClasses: [],
+      pendingClassRequests: 0,
+      pendingCertificates: 0,
+      upcomingClassesCount: 0,
+      topPendingRequests: [],
+      topPendingCertificates: []
+    }
+  }
   const today = new Date().toISOString().split('T')[0]
   
   // 1. 오늘의 수업 조회

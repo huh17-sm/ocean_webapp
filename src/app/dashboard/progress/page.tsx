@@ -4,7 +4,7 @@ import { getMyProgressSummary } from '@/app/actions/progress'
 import { ProgressView } from '@/components/dashboard/progress-view'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
-import { ArrowLeft } from 'lucide-react'
+import { ArrowLeft, BookOpen } from 'lucide-react'
 
 // 캐싱 방지
 export const dynamic = 'force-dynamic'
@@ -39,7 +39,10 @@ export default async function ProgressPage() {
           </Button>
         </Link>
         <div>
-          <h1 className="text-3xl font-bold text-slate-900">📚 내 진도</h1>
+          <h1 className="text-3xl font-bold text-slate-900 flex items-center gap-2">
+            <BookOpen className="h-7 w-7 text-blue-600" />
+            내 진도
+          </h1>
           <p className="text-slate-500 mt-2">
             {profile?.name}님의 교육 진도와 스킬 현황
           </p>

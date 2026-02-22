@@ -21,8 +21,9 @@ import {
     SelectValue,
 } from '@/components/ui/select'
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
+import { TimePicker } from '@/components/ui/time-picker'
 import { createClass, updateClass } from '@/app/admin/actions'
-import { Loader2, Plus, Pencil } from 'lucide-react'
+import { Loader2, Plus, Pencil, AlertTriangle } from 'lucide-react'
 import { ClassData } from './availability-calendar' 
 import { Pool } from '@/types'
 import { getPoolTimeSlots, isPoolHoliday } from '@/utils/pool-logic'
@@ -222,7 +223,7 @@ export function ClassFormDialog({ mode, initialData, trigger, defaultDate, onSuc
                                 value={date}
                                 onChange={(e) => setDate(e.target.value)}
                             />
-                            {isHoliday && <p className="text-red-500 text-xs mt-1">⚠️ 선택한 날짜는 해당 수영장 휴무일입니다.</p>}
+                            {isHoliday && <p className="text-red-500 text-xs mt-1 flex items-center gap-1"><AlertTriangle className="w-3 h-3" /> 선택한 날짜는 해당 수영장 휴무일입니다.</p>}
                         </div>
                     </div>
 
@@ -264,15 +265,7 @@ export function ClassFormDialog({ mode, initialData, trigger, defaultDate, onSuc
                             </div>
                             <div className="grid grid-cols-4 items-center gap-4">
                                 <Label htmlFor="time" className="text-right">시간</Label>
-                                <Input
-                                    id="time"
-                                    name="time"
-                                    type="time"
-                                    required
-                                    value={time}
-                                    onChange={(e) => setTime(e.target.value)}
-                                    className="col-span-3"
-                                />
+                                <TimePicker name="time" required value={time} onChange={setTime} className="col-span-3" />
                             </div>
                         </>
                     ) : (

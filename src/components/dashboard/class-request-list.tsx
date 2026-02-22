@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { format } from 'date-fns'
 import { ko } from 'date-fns/locale'
-import { Clock, MapPin, Calendar, Trash2 } from 'lucide-react'
+import { Clock, MapPin, Calendar, Trash2, AlertTriangle, Hourglass, Lightbulb, CheckCircle2, XCircle, Ban } from 'lucide-react'
 import { deleteMyClassRequest, cancelMyClassRequest } from '@/app/classes/actions'
 import { useRouter } from 'next/navigation'
 import { useConfirm } from '@/components/ui/confirm-dialog'
@@ -72,8 +72,8 @@ export function ClassRequestList({ requests }: ClassRequestListProps) {
                             <span>{request.time_slot}</span>
                         </div>
                     </div>
-                    <p className="text-red-600 font-medium mt-2">
-                        ⚠️ 삭제된 요청은 복구할 수 없습니다.
+                    <p className="text-red-600 font-medium mt-2 flex items-center gap-1">
+                        <AlertTriangle className="w-4 h-4" /> 삭제된 요청은 복구할 수 없습니다.
                     </p>
                 </div>
             ),
@@ -233,12 +233,12 @@ export function ClassRequestList({ requests }: ClassRequestListProps) {
                                     <div className="mt-3 pt-3 border-t border-slate-100">
                                         <div className="flex items-start justify-between gap-2">
                                             <div className="flex-1">
-                                                <p className="text-xs text-slate-500">
-                                                    ⏳ 관리자가 검토 중입니다. 승인되면 수업이 자동으로 개설됩니다.
+                                                <p className="text-xs text-slate-500 flex items-center gap-1">
+                                                    <Hourglass className="w-4 h-4" /> 관리자가 검토 중입니다. 승인되면 수업이 자동으로 개설됩니다.
                                                 </p>
                                                 {request.admin_comment && (
                                                     <div className="mt-2 p-2 bg-blue-50/50 rounded border border-blue-100">
-                                                        <p className="text-[11px] font-semibold text-blue-700 mb-0.5 italic">💡 관리자 안내: {request.admin_comment}</p>
+                                                        <p className="text-[11px] font-semibold text-blue-700 mb-0.5 italic flex items-center gap-1"><Lightbulb className="w-3 h-3" /> 관리자 안내: {request.admin_comment}</p>
                                                         <p className="text-[10px] text-slate-500 leading-tight">상담을 통해 조율된 내용으로 요청 정보가 수정되었습니다.</p>
                                                     </div>
                                                 )}
@@ -284,8 +284,8 @@ export function ClassRequestList({ requests }: ClassRequestListProps) {
                                     <div className="mt-3 pt-3 border-t border-slate-100">
                                         <div className="flex items-start justify-between gap-2">
                                             <div className="flex-1">
-                                                <p className="text-xs text-green-600">
-                                                    ✅ 승인되었습니다! 수업이 개설되었으니 예약 가능합니다.
+                                                <p className="text-xs text-green-600 flex items-center gap-1">
+                                                    <CheckCircle2 className="w-4 h-4" /> 승인되었습니다! 수업이 개설되었으니 예약 가능합니다.
                                                 </p>
                                                 {request.admin_comment && (
                                                     <div className="mt-2 p-2 bg-slate-50 rounded border border-slate-100">
@@ -317,8 +317,8 @@ export function ClassRequestList({ requests }: ClassRequestListProps) {
                                     <div className="mt-3 pt-3 border-t border-slate-100">
                                         <div className="flex items-start justify-between gap-2">
                                             <div className="flex-1">
-                                                <p className="text-xs text-red-600">
-                                                    ❌ 요청이 거절되었습니다. 다른 날짜나 시간으로 다시 요청해보세요.
+                                                <p className="text-xs text-red-600 flex items-center gap-1">
+                                                    <XCircle className="w-4 h-4 shrink-0" /> 요청이 거절되었습니다. 다른 날짜나 시간으로 다시 요청해보세요.
                                                 </p>
                                                 {request.admin_comment && (
                                                     <p className="text-xs text-slate-500 mt-1">
@@ -349,12 +349,12 @@ export function ClassRequestList({ requests }: ClassRequestListProps) {
                                     <div className="mt-3 pt-3 border-t border-slate-100">
                                         <div className="flex items-start justify-between gap-2">
                                             {request.admin_comment === '사용자가 직접 취소함' ? (
-                                                <p className="text-xs text-slate-500 flex-1">
-                                                    🗑️ 사용자가 직접 요청을 취소했습니다.
+                                                <p className="text-xs text-slate-500 flex-1 flex items-center gap-1">
+                                                    <Trash2 className="w-4 h-4 shrink-0" /> 사용자가 직접 요청을 취소했습니다.
                                                 </p>
                                             ) : (
-                                                <p className="text-xs text-red-600/80 flex-1">
-                                                    🚫 요청이 취소되었습니다. {request.admin_comment ? `사유: ${request.admin_comment}` : '관리자가 수업을 취소했습니다.'}
+                                                <p className="text-xs text-red-600/80 flex-1 flex items-center gap-1">
+                                                    <Ban className="w-4 h-4 shrink-0" /> 요청이 취소되었습니다. {request.admin_comment ? `사유: ${request.admin_comment}` : '관리자가 수업을 취소했습니다.'}
                                                 </p>
                                             )}
                                             <Button

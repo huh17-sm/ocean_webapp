@@ -40,7 +40,10 @@ export function CreditsView({ profile, transactions }: CreditsViewProps) {
           </Button>
         </Link>
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-slate-900">💳 크레딧</h1>
+          <h1 className="text-2xl md:text-3xl font-bold text-slate-900 flex items-center gap-2">
+            <Coins className="h-6 w-6 text-blue-500" />
+            크레딧
+          </h1>
           <p className="text-slate-500 mt-1">내 크레딧 잔액과 이용 내역</p>
         </div>
       </div>
@@ -57,7 +60,7 @@ export function CreditsView({ profile, transactions }: CreditsViewProps) {
           <div className="space-y-4">
             <div>
               <p className="text-sm opacity-90 mb-1">총 잔액</p>
-              <p className="text-5xl font-bold">{formatCredits(profile?.general_credits ?? profile?.credits ?? 0)}</p>
+              <p className="text-5xl font-bold">{formatCredits(Math.max(profile?.general_credits || 0, profile?.credits || 0))}</p>
             </div>
 
             <Button

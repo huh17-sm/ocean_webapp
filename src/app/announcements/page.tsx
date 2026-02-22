@@ -1,5 +1,6 @@
 import { Metadata } from 'next'
 import { PolicyLayout } from '@/components/layout/policy-layout'
+import { Megaphone } from 'lucide-react'
 
 export const metadata: Metadata = {
   title: '공지사항 - Ocean Freediving',
@@ -10,8 +11,8 @@ export default function AnnouncementsPage() {
   return (
     <PolicyLayout title="공지사항">
       <div className="space-y-6">
-        <div className="text-center py-12">
-          <div className="text-6xl mb-4">📢</div>
+        <div className="text-center py-12 flex flex-col items-center">
+          <Megaphone className="h-16 w-16 text-blue-500 mb-4" />
           <h2 className="text-2xl font-bold text-slate-900 mb-2">공지사항</h2>
           <p className="text-slate-600">
             현재 공지사항이 없습니다.

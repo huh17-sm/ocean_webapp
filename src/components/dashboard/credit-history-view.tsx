@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { ArrowLeft, TrendingUp, TrendingDown, Calendar } from 'lucide-react'
+import { ArrowLeft, TrendingUp, TrendingDown, Calendar, Receipt } from 'lucide-react'
 import { formatCredits } from '@/lib/credit-constants'
 
 interface CreditHistoryViewProps {
@@ -50,7 +50,10 @@ export function CreditHistoryView({ transactions }: CreditHistoryViewProps) {
           </Button>
         </Link>
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-slate-900">💸 전체 사용 내역</h1>
+          <h1 className="text-2xl md:text-3xl font-bold text-slate-900 flex items-center gap-2">
+            <Receipt className="h-6 w-6 text-green-600" />
+            전체 사용 내역
+          </h1>
           <p className="text-slate-500 mt-1">모든 크레딧 거래 내역을 확인하세요</p>
         </div>
       </div>

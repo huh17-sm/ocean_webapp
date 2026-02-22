@@ -19,7 +19,7 @@ import {
   updateCourseProgress,
   getStudentCourseProgress,
 } from '@/app/admin/actions/skills'
-import { Loader2, Search } from 'lucide-react'
+import { Loader2, Search, CheckCircle2 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 
 interface Student {
@@ -292,7 +292,7 @@ export function CourseProgressManagement({
                     </div>
                     <div className="space-y-1 text-xs text-slate-600">
                       <p>
-                        이론: {progress.theory_completed ? '완료 ✅' : '미완료'}
+                        <div className="flex items-center gap-1">이론: {progress.theory_completed ? <span className="flex items-center gap-1 text-green-600">완료 <CheckCircle2 className="w-3 h-3" /></span> : '미완료'}</div>
                       </p>
                       <p>수영장 세션: {progress.pool_sessions_completed}회</p>
                       <p className="text-slate-500">

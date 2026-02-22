@@ -19,58 +19,48 @@ import {
   Loader2,
   ClipboardCheck,
   AlertTriangle,
+  MessageSquare,
+  MessageSquareHeart
 } from 'lucide-react'
 import { toast } from 'sonner'
-import { completeSkill, uncompleteSkill } from '@/app/admin/actions/skills'
+import { completeSkill, uncompleteSkill, updateSkillNote } from '@/app/admin/actions/skills'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { Textarea } from '@/components/ui/textarea'
+import { SKILL_DEFINITIONS } from '@/lib/constants'
 
 interface TabSkillsProps {
   userId: string
   courseLevel: string
   skills: any[]
+  requiredSkills?: { type: string; requirement: string }[]
   onUpdate: () => void
-}
-
-// 각 과정 레벨별 예상 스킬 목록
-const SKILL_DEFINITIONS: Record<string, { type: string; label: string }[]> = {
-  '입문': [
-    { type: 'theory', label: '이론 학습' },
-    { type: 'static', label: '스태틱 (정적 무호흡)' },
-    { type: 'dynamic', label: '다이내믹 (동적 수영)' },
-  ],
-  '초급': [
-    { type: 'theory', label: '이론 학습' },
-    { type: 'static', label: '스태틱 (정적 무호흡)' },
-    { type: 'dynamic', label: '다이내믹 (동적 수영)' },
-    { type: 'depth', label: '수심 다이빙' },
-    { type: 'rescue', label: '구조 기술' },
-  ],
-  '중급': [
-    { type: 'theory', label: '이론 학습' },
-    { type: 'static', label: '스태틱 (정적 무호흡)' },
-    { type: 'dynamic', label: '다이내믹 (동적 수영)' },
-    { type: 'depth', label: '수심 다이빙' },
-    { type: 'rescue', label: '구조 기술' },
-  ],
-  '고급': [
-    { type: 'theory', label: '이론 학습' },
-    { type: 'static', label: '스태틱 (정적 무호흡)' },
-    { type: 'dynamic', label: '다이내믹 (동적 수영)' },
-    { type: 'depth', label: '수심 다이빙' },
-    { type: 'rescue', label: '구조 기술' },
-  ],
 }
 
 export function TabSkills({
   userId,
   courseLevel,
   skills,
+  requiredSkills,
   onUpdate,
 }: TabSkillsProps) {
   const [processingSkill, setProcessingSkill] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
+  const [editingNoteFor, setEditingNoteFor] = useState<string | null>(null)
+  const [noteContent, setNoteContent] = useState('')
 
-  // 이 과정의 스킬 정의 목록
-  const skillDefs = SKILL_DEFINITIONS[courseLevel] || SKILL_DEFINITIONS['초급']
+  const SKILL_ORDER = ['theory', 'static', 'dynamic', 'depth', 'rescue']
+
+  // 이 과정의 스킬 정의 목록 (requiredSkills가 있으면 그것을, 없으면 기존 하드코딩 맵 사용)
+  const skillDefs: Array<{ type: string; label: string; requirement?: string }> = requiredSkills && requiredSkills.length > 0
+    ? requiredSkills.map(s => {
+        const defaultLabel = (SKILL_DEFINITIONS[courseLevel] || SKILL_DEFINITIONS['초급'])?.find(sd => sd.type === s.type)?.label || s.type
+        return { type: s.type, label: defaultLabel, requirement: s.requirement }
+      }).sort((a, b) => {
+        const orderA = SKILL_ORDER.indexOf(a.type)
+        const orderB = SKILL_ORDER.indexOf(b.type)
+        return (orderA === -1 ? 99 : orderA) - (orderB === -1 ? 99 : orderB)
+      })
+    : SKILL_DEFINITIONS[courseLevel] || SKILL_DEFINITIONS['초급']
 
   // 기존 스킬 현황을 맵으로 변환
   const skillMap = new Map(
@@ -123,6 +113,32 @@ export function TabSkills({
     })
   }
 
+  const handleSaveNote = (skillType: string) => {
+    // startTransition 안배고 바로 서버 액션 호출해도 됩니다
+    setProcessingSkill(skillType)
+    startTransition(async () => {
+      try {
+        const result = await updateSkillNote({
+          user_id: userId,
+          course_level: courseLevel,
+          skill_type: skillType as any,
+          notes: noteContent
+        })
+        if (result.success) {
+          toast.success('메모가 저장되었습니다.')
+          setEditingNoteFor(null)
+          onUpdate()
+        } else {
+          toast.error(result.message)
+        }
+      } catch (error) {
+        toast.error('메모 저장 중 오류가 발생했습니다.')
+      } finally {
+        setProcessingSkill(null)
+      }
+    })
+  }
+
   return (
     <div className="space-y-4">
       {/* 진행률 요약 */}
@@ -167,36 +183,49 @@ export function TabSkills({
                   : 'border-slate-200'
               }`}
             >
-              <CardContent className="p-3">
+              <CardContent className="p-3 flex items-center justify-between gap-2">
                 <button
-                  className="w-full flex items-center gap-3 text-left"
+                  className="flex-1 flex items-center gap-3 text-left"
                   onClick={() => handleToggleSkill(def.type, isCompleted)}
                   disabled={isProcessing}
                 >
                   {/* 아이콘 */}
                   {isProcessing ? (
-                    <Loader2 className="h-5 w-5 animate-spin text-blue-500 flex-shrink-0" />
+                    <Loader2 className="h-5 w-5 animate-spin text-blue-500 shrink-0" />
                   ) : isCompleted ? (
-                    <CheckCircle2 className="h-5 w-5 text-green-500 flex-shrink-0" />
+                    <CheckCircle2 className="h-5 w-5 text-green-500 shrink-0" />
                   ) : (
-                    <Circle className="h-5 w-5 text-slate-300 flex-shrink-0" />
+                    <Circle className="h-5 w-5 text-slate-300 shrink-0" />
                   )}
 
                   {/* 스킬명 */}
                   <div className="flex-1">
-                    <p
-                      className={`text-sm font-medium ${
-                        isCompleted ? 'text-green-700' : 'text-slate-700'
-                      }`}
-                    >
-                      {def.label}
-                    </p>
+                    <div className="flex items-center gap-2">
+                      <p
+                        className={`text-sm font-medium ${
+                          isCompleted ? 'text-green-700' : 'text-slate-700'
+                        }`}
+                      >
+                        {def.label}
+                      </p>
+                      {/* 목표 기준치 표시 */}
+                      {'requirement' in def && def.requirement && (
+                        <span className="text-[10px] bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded border">
+                          목표: {def.requirement}
+                        </span>
+                      )}
+                    </div>
                     {isCompleted && existing?.completed_at && (
                       <p className="text-xs text-slate-400">
                         완료일:{' '}
                         {new Date(existing.completed_at).toLocaleDateString(
                           'ko-KR'
                         )}
+                      </p>
+                    )}
+                    {existing?.notes && (
+                      <p className="text-xs text-slate-500 mt-1 italic border-l-2 border-slate-200 pl-2">
+                        {existing.notes}
                       </p>
                     )}
                   </div>
@@ -211,6 +240,49 @@ export function TabSkills({
                     </Badge>
                   )}
                 </button>
+                
+                {/* 메모 작성 팝오버 */}
+                <div className="flex gap-2">
+                  <Popover 
+                    open={editingNoteFor === def.type} 
+                    onOpenChange={(open) => {
+                      if (open) {
+                        setNoteContent(existing?.notes || '')
+                        setEditingNoteFor(def.type)
+                      } else {
+                        setEditingNoteFor(null)
+                      }
+                    }}
+                  >
+                    <PopoverTrigger asChild>
+                      <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-blue-500 shrink-0">
+                        {existing?.notes ? (
+                          <MessageSquareHeart className="h-4 w-4 text-blue-500" />
+                        ) : (
+                          <MessageSquare className="h-4 w-4" />
+                        )}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-80" align="end">
+                      <div className="space-y-3">
+                        <h4 className="font-medium text-sm">메모 작성 ({def.label})</h4>
+                        <Textarea 
+                          value={noteContent}
+                          onChange={(e) => setNoteContent(e.target.value)}
+                          placeholder="스킬 수행 관련 특이사항이나 메모를 남겨주세요."
+                          className="text-sm min-h-[100px]"
+                        />
+                        <div className="flex gap-2 justify-end">
+                          <Button variant="outline" size="sm" onClick={() => setEditingNoteFor(null)}>취소</Button>
+                          <Button size="sm" onClick={() => handleSaveNote(def.type)} disabled={isPending}>
+                            {isProcessing ? <Loader2 className="h-3 w-3 animate-spin mr-1"/> : null}
+                            저장
+                          </Button>
+                        </div>
+                      </div>
+                    </PopoverContent>
+                  </Popover>
+                </div>
               </CardContent>
             </Card>
           )
@@ -220,7 +292,7 @@ export function TabSkills({
       {/* 전체 미완료 시 경고 */}
       {!allCompleted && completedCount > 0 && (
         <div className="flex gap-2 p-3 bg-amber-50 border border-amber-200 rounded-lg">
-          <AlertTriangle className="h-4 w-4 text-amber-600 flex-shrink-0 mt-0.5" />
+          <AlertTriangle className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
           <p className="text-xs text-amber-700">
             아직 완료되지 않은 스킬이 있습니다. 자격증 발급 전 모든 스킬을
             완료하는 것을 권장합니다.

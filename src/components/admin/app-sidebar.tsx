@@ -81,7 +81,7 @@ export function AdminAppSidebar({ className, ...props }: React.ComponentProps<ty
     return (
         <Sidebar className={className} {...props}>
             <SidebarHeader className="p-4 border-b">
-                <h2 className="text-xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">🌊 Ocean Admin</h2>
+                <h2 className="text-xl font-bold bg-linear-to-r from-primary to-accent bg-clip-text text-transparent">Ocean Admin</h2>
             </SidebarHeader>
             <SidebarContent>
                 <SidebarGroup>

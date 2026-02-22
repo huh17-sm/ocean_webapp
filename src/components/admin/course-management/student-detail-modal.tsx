@@ -18,7 +18,7 @@ import {
 } from '@/components/ui/dialog'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Badge } from '@/components/ui/badge'
-import { Loader2, User } from 'lucide-react'
+import { Loader2, User, BookOpen, CheckCircle2, GraduationCap } from 'lucide-react'
 import { getStudentDetail, type StudentDetail } from '@/app/admin/actions/course-management'
 import { TabProgress } from './tab-progress'
 import { TabSkills } from './tab-skills'
@@ -120,9 +120,9 @@ export function StudentDetailModal({
         {!loading && detail && userId && courseLevel && (
           <Tabs value={activeTab} onValueChange={setActiveTab}>
             <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="progress">📚 교육 진도</TabsTrigger>
-              <TabsTrigger value="skills">✅ 스킬 체크</TabsTrigger>
-              <TabsTrigger value="cert">🎓 자격증</TabsTrigger>
+              <TabsTrigger value="progress" className="flex items-center gap-1"><BookOpen className="w-4 h-4 text-blue-500"/> 교육 진도</TabsTrigger>
+              <TabsTrigger value="skills" className="flex items-center gap-1"><CheckCircle2 className="w-4 h-4 text-green-500"/> 스킬 체크</TabsTrigger>
+              <TabsTrigger value="cert" className="flex items-center gap-1"><GraduationCap className="w-4 h-4 text-purple-500"/> 자격증</TabsTrigger>
             </TabsList>
 
             {/* 교육 진도 탭 */}

@@ -32,11 +32,13 @@ import {
   Circle,
   Minus,
   Plus,
-  RefreshCw,
+  Trash2,
+  ArchiveRestore,
+  AlertOctagon,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { updateCourseProgress } from '@/app/admin/actions/skills'
-import { getAttendedPoolSessionCount } from '@/app/admin/actions/course-management'
+import { moveToTrash, restoreFromTrash, deletePermanently } from '@/app/admin/actions/course-management'
 
 interface TabProgressProps {
   userId: string
@@ -63,9 +65,8 @@ export function TabProgress({
   )
   const [notes, setNotes] = useState<string>(progress?.notes || '')
 
-  // 실제 출석 풀 세션 횟수
-  const [actualPoolSessions, setActualPoolSessions] = useState<number | null>(null)
-  const [syncLoading, setSyncLoading] = useState(false)
+  // 최소 진행 세션 기준
+  const minSessionCount = progress?.session_count || 3
 
   // progress prop이 변경되면 로컬 상태 동기화
   useEffect(() => {
@@ -77,34 +78,14 @@ export function TabProgress({
     }
   }, [progress])
 
-  // 실제 출석 풀 세션 횟수 로드
-  useEffect(() => {
-    if (userId) {
-      getAttendedPoolSessionCount(userId).then(setActualPoolSessions)
-    }
-  }, [userId])
-
-  // 실제 출석 횟수로 동기화
-  const handleSyncPoolSessions = async () => {
-    setSyncLoading(true)
-    try {
-      const count = await getAttendedPoolSessionCount(userId)
-      setActualPoolSessions(count)
-      setPoolSessions(count)
-      toast.success(`실제 출석 횟수(${count}회)로 동기화되었습니다.`)
-    } catch {
-      toast.error('출석 횟수 조회에 실패했습니다.')
-    } finally {
-      setSyncLoading(false)
-    }
-  }
-
   // 변경 사항 감지
   const hasChanges =
     status !== (progress?.status || 'in_progress') ||
     theoryCompleted !== (progress?.theory_completed || false) ||
     poolSessions !== (progress?.pool_sessions_completed || 0) ||
     notes !== (progress?.notes || '')
+
+  const isDeleted = progress?.status === 'deleted'
 
   /** 저장 */
   const handleSave = () => {
@@ -133,6 +114,53 @@ export function TabProgress({
         }
       } catch {
         toast.error('저장 중 오류가 발생했습니다.')
+      }
+    })
+  }
+
+  // 삭제(휴지통으로)
+  const handleMoveToTrash = () => {
+    if (!confirm('이 과정을 휴지통으로 이동하시겠습니까? (사용자 화면에서 숨겨집니다)')) return
+    startTransition(async () => {
+      try {
+        const res = await moveToTrash(progress.id)
+        if (res.success) {
+          toast.success('과정이 숨겨졌습니다 (휴지통 이동).')
+          onUpdate()
+        } else toast.error('삭제 실패: ' + res.error)
+      } catch {
+        toast.error('오류가 발생했습니다.')
+      }
+    })
+  }
+
+  // 복원
+  const handleRestore = () => {
+    startTransition(async () => {
+      try {
+        const res = await restoreFromTrash(progress.id)
+        if (res.success) {
+          toast.success('과정이 복구되었습니다.')
+          onUpdate() // 부모 컴포넌트 리프레시 (모달 닫힐 수 있음)
+        } else toast.error('복구 실패: ' + res.error)
+      } catch {
+        toast.error('오류가 발생했습니다.')
+      }
+    })
+  }
+
+  // 완전 삭제
+  const handleHardDelete = () => {
+    if (!confirm('경고: 이 과정의 진도 데이터가 데이터베이스에서 영구 삭제됩니다! 복구할 수 없습니다. 계속하시겠습니까?')) return
+    startTransition(async () => {
+      try {
+        const res = await deletePermanently(progress.id)
+        if (res.success) {
+          toast.success('과정이 영구 삭제되었습니다.')
+          onUpdate()
+        } else toast.error('영구 삭제 실패: ' + res.error)
+      } catch {
+        toast.error('오류가 발생했습니다.')
       }
     })
   }
@@ -175,7 +203,7 @@ export function TabProgress({
           <SelectContent>
             <SelectItem value="in_progress">🔵 진행 중</SelectItem>
             <SelectItem value="completed">🟢 수료</SelectItem>
-            <SelectItem value="dropped">🔴 중단</SelectItem>
+            <SelectItem value="dropped">🔴 만료</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -209,44 +237,9 @@ export function TabProgress({
       <Card>
         <CardContent className="p-4">
           <div>
-            <div className="flex items-center justify-between mb-2">
-              <p className="text-sm font-medium">풀 세션 완료 횟수</p>
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-7 text-xs gap-1.5"
-                onClick={handleSyncPoolSessions}
-                disabled={syncLoading}
-              >
-                {syncLoading ? (
-                  <Loader2 className="h-3 w-3 animate-spin" />
-                ) : (
-                  <RefreshCw className="h-3 w-3" />
-                )}
-                출석 데이터 연동
-              </Button>
+            <div className="flex items-center justify-between mb-4">
+              <p className="text-sm font-medium">풀 세션 완료 횟수 (최소 기준: {minSessionCount}회)</p>
             </div>
-
-            {/* 실제 출석 횟수 표시 */}
-            {actualPoolSessions !== null && (
-              <div className="flex items-center gap-2 mb-3 text-xs">
-                <Badge
-                  variant="outline"
-                  className={
-                    poolSessions === actualPoolSessions
-                      ? 'bg-green-50 text-green-700 border-green-200'
-                      : 'bg-amber-50 text-amber-700 border-amber-200'
-                  }
-                >
-                  실제 출석: {actualPoolSessions}회
-                </Badge>
-                {poolSessions !== actualPoolSessions && (
-                  <span className="text-amber-600">
-                    (현재 기록과 {Math.abs(poolSessions - actualPoolSessions)}회 차이)
-                  </span>
-                )}
-              </div>
-            )}
 
             <div className="flex items-center gap-3">
               <Button
@@ -287,19 +280,54 @@ export function TabProgress({
         />
       </div>
 
-      {/* 저장 버튼 */}
-      <Button
-        onClick={handleSave}
-        disabled={isPending || !hasChanges}
-        className="w-full gap-2"
-      >
-        {isPending ? (
-          <Loader2 className="h-4 w-4 animate-spin" />
-        ) : (
-          <Save className="h-4 w-4" />
-        )}
-        {hasChanges ? '진도 저장' : '변경 사항 없음'}
-      </Button>
+      {/* 버튼 영역 */}
+      {!isDeleted ? (
+        <div className="flex flex-col sm:flex-row gap-3 mt-4">
+          <Button
+            onClick={handleSave}
+            disabled={isPending || !hasChanges}
+            className="flex-1 gap-2"
+          >
+            {isPending ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Save className="h-4 w-4" />
+            )}
+            {hasChanges ? '진도 저장' : '변경 사항 없음'}
+          </Button>
+
+          <Button
+            variant="outline"
+            className="text-rose-600 border-rose-200 hover:bg-rose-50 hover:text-rose-700"
+            onClick={handleMoveToTrash}
+            disabled={isPending}
+          >
+            <Trash2 className="h-4 w-4 mr-2" />
+            과정 숨김 (삭제)
+          </Button>
+        </div>
+      ) : (
+        <div className="flex flex-col sm:flex-row gap-3 mt-6 border-t pt-4">
+          <Button
+            onClick={handleRestore}
+            disabled={isPending}
+            className="flex-1 gap-2 bg-emerald-600 hover:bg-emerald-700 text-white"
+          >
+            <ArchiveRestore className="h-4 w-4" />
+            과정 복구하기
+          </Button>
+
+          <Button
+            variant="destructive"
+            onClick={handleHardDelete}
+            disabled={isPending}
+            className="flex-1 gap-2"
+          >
+            <AlertOctagon className="h-4 w-4" />
+            영구 삭제 (복구 불가)
+          </Button>
+        </div>
+      )}
     </div>
   )
 }
@@ -320,11 +348,15 @@ function StatusBadge({ status }: { status: string }) {
       )
     case 'dropped':
       return (
-        <Badge className="bg-red-100 text-red-700">중단</Badge>
+        <Badge className="bg-red-100 text-red-700">만료</Badge>
       )
     case 'pending':
       return (
         <Badge className="bg-amber-100 text-amber-700">대기</Badge>
+      )
+    case 'deleted':
+      return (
+        <Badge className="bg-slate-200 text-slate-700">과정 삭제됨</Badge>
       )
     default:
       return <Badge variant="outline">{status}</Badge>

@@ -14,6 +14,7 @@ import {
 import { getClassStudents } from '@/app/admin/actions'
 import { Loader2, Calendar, MapPin } from 'lucide-react'
 import { Switch } from '@/components/ui/switch'
+import { CLASS_TYPES } from '@/lib/constants'
 
 interface ClassInfo {
   id: string
@@ -77,7 +78,7 @@ export function DebriefingManagement({
         student_name: student.profiles?.name || '',
         student_email: student.profiles?.email || '',
         status: student.status,
-        mark_attended: student.status === 'confirmed',
+        mark_attended: student.status === 'attended',
         performance: existing?.performance || '',
         improvement: existing?.improvement || '',
         strengths: existing?.strengths || '',
@@ -118,7 +119,7 @@ export function DebriefingManagement({
       const inputs = Array.from(debriefings.values())
         .filter(
           (d) =>
-            d.performance || d.improvement || d.strengths || d.next_goal || d.mark_attended
+            d.performance || d.improvement || d.strengths || d.next_goal || d.mark_attended !== undefined
         )
         .map((d) => ({
           reservation_id: d.reservation_id,
@@ -184,7 +185,9 @@ export function DebriefingManagement({
                 }`}
               >
                 <div className="flex items-center gap-2 mb-1">
-                  <Badge variant="outline">{classInfo.type}</Badge>
+                  <Badge variant="outline">
+                    {CLASS_TYPES[classInfo.type as keyof typeof CLASS_TYPES] || classInfo.type}
+                  </Badge>
                 </div>
                 <p className="text-xs text-slate-600 flex items-center gap-1 mt-1">
                   <Calendar className="h-3 w-3" />
@@ -234,8 +237,12 @@ export function DebriefingManagement({
                     </div>
                     <div className="flex items-center gap-4">
                       <div className="flex items-center gap-2">
-                        <Label htmlFor={`attend-${debriefing.reservation_id}`} className="text-sm">
-                          출석 처리
+                        <Label htmlFor={`attend-${debriefing.reservation_id}`} className="text-sm font-medium">
+                          {debriefing.mark_attended ? (
+                            <span className="text-green-600">출석 완료</span>
+                          ) : (
+                            <span className="text-slate-600">출석 처리</span>
+                          )}
                         </Label>
                         <Switch
                           id={`attend-${debriefing.reservation_id}`}
@@ -243,7 +250,6 @@ export function DebriefingManagement({
                           onCheckedChange={(checked) =>
                             updateDebriefing(debriefing.reservation_id, 'mark_attended', checked)
                           }
-                          disabled={debriefing.status === 'attended'}
                         />
                       </div>
                       <Badge
@@ -260,7 +266,7 @@ export function DebriefingManagement({
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div>
-                    <Label className="text-sm">🎯 수행 평가</Label>
+                    <Label className="text-sm">수행 평가</Label>
                     <Textarea
                       value={debriefing.performance}
                       onChange={(e) =>
@@ -277,7 +283,7 @@ export function DebriefingManagement({
                   </div>
 
                   <div>
-                    <Label className="text-sm">✨ 잘한 점</Label>
+                    <Label className="text-sm">잘한 점</Label>
                     <Textarea
                       value={debriefing.strengths}
                       onChange={(e) =>
@@ -294,7 +300,7 @@ export function DebriefingManagement({
                   </div>
 
                   <div>
-                    <Label className="text-sm">📈 개선 포인트</Label>
+                    <Label className="text-sm">개선 포인트</Label>
                     <Textarea
                       value={debriefing.improvement}
                       onChange={(e) =>
@@ -311,7 +317,7 @@ export function DebriefingManagement({
                   </div>
 
                   <div>
-                    <Label className="text-sm">🎓 다음 목표</Label>
+                    <Label className="text-sm">다음 목표</Label>
                     <Textarea
                       value={debriefing.next_goal}
                       onChange={(e) =>

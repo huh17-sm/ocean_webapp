@@ -11,7 +11,7 @@ import {
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { AlertCircle, Loader2 } from 'lucide-react'
+import { AlertCircle, Loader2, Sparkles, FileText } from 'lucide-react'
 import { requestCourseRegistration } from '@/app/actions/course-enrollment'
 import { toast } from 'sonner'
 
@@ -80,7 +80,7 @@ export function CourseRegistrationDialog({
             {creditAmount > 0 && (
               <div className="bg-blue-50 border border-blue-200 rounded p-3">
                 <p className="text-sm font-medium text-blue-900">
-                  ✨ 승인 시 {creditAmount}크레딧 지급
+                  <span className="flex items-center gap-1"><Sparkles className="w-4 h-4 text-green-500"/> 승인 시 {creditAmount}크레딧 지급</span>
                 </p>
                 <p className="text-xs text-blue-700 mt-1">
                   과정 등록을 승인받으면 자동으로 크레딧이 계정에 추가됩니다.
@@ -115,7 +115,7 @@ export function CourseRegistrationDialog({
           {/* 안내 */}
           <div className="p-3 bg-amber-50 border border-amber-200 rounded">
             <p className="text-sm text-amber-800">
-              📋 신청 후 관리자의 승인을 기다려주세요. 승인되면 알림을 받을 수 있습니다.
+              <span className="flex items-start gap-1"><FileText className="w-4 h-4 mt-0.5" /> 신청 후 관리자의 승인을 기다려주세요. 승인되면 알림을 받을 수 있습니다.</span>
             </p>
           </div>
         </div>

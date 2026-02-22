@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import Link from 'next/link'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -14,9 +15,13 @@ import {
   ArrowRight,
   Plus,
   User,
-  Bell
+  Bell,
+  Flame,
+  PartyPopper,
+  Mail
 } from 'lucide-react'
 import { formatCredits } from '@/lib/credit-constants'
+import { UpcomingClassDialog } from '@/components/dashboard/upcoming-class-dialog'
 
 interface DashboardHomeProps {
   profile: any
@@ -34,6 +39,7 @@ export function DashboardHome({
   expiringCredits,
 }: DashboardHomeProps) {
   const currentCourse = courseProgress.find((c) => c.status === 'in_progress')
+  const [selectedReservation, setSelectedReservation] = useState<any>(null)
 
   return (
     <div className="container mx-auto p-4 md:p-6 max-w-xl space-y-6 pb-24">
@@ -59,7 +65,7 @@ export function DashboardHome({
       </div>
 
       {/* 2. 내 크레딧 (Gradient Card) */}
-      <Card className="bg-gradient-to-br from-blue-600 to-indigo-700 text-white border-none shadow-lg shadow-blue-200">
+      <Card className="bg-linear-to-br from-blue-600 to-indigo-700 text-white border-none shadow-lg shadow-blue-200">
         <CardContent className="p-6">
           <div className="flex justify-between items-start mb-4">
             <div className="flex items-center gap-2 opacity-90">
@@ -76,7 +82,7 @@ export function DashboardHome({
           <div className="flex justify-between items-end">
              <div>
                 <span className="text-4xl font-bold tracking-tight">
-                    {(profile?.general_credits ?? profile?.credits ?? 0).toLocaleString()}
+                    {Math.max(profile?.general_credits || 0, profile?.credits || 0).toLocaleString()}
                 </span>
                 <span className="text-lg ml-1 opacity-80">C</span>
              </div>
@@ -131,7 +137,7 @@ export function DashboardHome({
         ) : (
             <div className="space-y-3">
                 {upcomingReservations.map(reservation => (
-                    <Link href={`/dashboard/reservations/${reservation.id}`} key={reservation.id}>
+                    <div key={reservation.id} onClick={() => setSelectedReservation(reservation)}>
                         <Card className="hover:shadow-md transition-shadow cursor-pointer border-l-4 border-l-blue-500">
                             <CardContent className="p-4 flex items-center justify-between">
                                 <div className="flex items-center gap-4">
@@ -152,14 +158,14 @@ export function DashboardHome({
                                             {reservation.classes.time.substring(0, 5)} 수업
                                         </h3>
                                         <p className="text-xs text-slate-500 mt-0.5 flex items-center">
-                                            {reservation.classes.location}
+                                            {reservation.classes.title || reservation.classes.location}
                                         </p>
                                     </div>
                                 </div>
                                 <ArrowRight className="w-5 h-5 text-slate-300" />
                             </CardContent>
                         </Card>
-                    </Link>
+                    </div>
                 ))}
             </div>
         )}
@@ -191,38 +197,49 @@ export function DashboardHome({
         ) : (
             <Card>
                 <CardContent className="p-5">
-                    <div className="flex justify-between items-center mb-4">
-                        <div>
-                            <span className="text-xs font-semibold text-blue-600 bg-blue-50 px-2 py-1 rounded">
-                                {currentCourse.course_level} 과정
-                            </span>
-                            <h3 className="font-bold text-lg mt-1">
-                                {currentCourse.status === 'in_progress' ? '교육 진행중 🔥' : '수료 완료 🎉'}
-                            </h3>
-                        </div>
-                        <div className="text-right">
-                             <span className="text-2xl font-bold text-slate-900">
-                                {Math.round((currentCourse.pool_sessions_completed / (currentCourse.pool_sessions_total || 4)) * 100)}%
-                             </span>
-                        </div>
-                    </div>
-                    
-                    <Progress value={(currentCourse.pool_sessions_completed / (currentCourse.pool_sessions_total || 4)) * 100} className="h-3 mb-4" />
-                    
-                    <div className="grid grid-cols-2 gap-4 text-sm">
-                        <div className="bg-slate-50 p-3 rounded-lg flex items-center justify-between">
-                            <span className="text-slate-500">이론 교육</span>
-                            <span className={`font-bold ${currentCourse.theory_completed ? 'text-blue-600' : 'text-slate-400'}`}>
-                                {currentCourse.theory_completed ? '완료' : '미완료'}
-                            </span>
-                        </div>
-                        <div className="bg-slate-50 p-3 rounded-lg flex items-center justify-between">
-                            <span className="text-slate-500">풀장 교육</span>
-                            <span className="font-bold text-slate-900">
-                                {currentCourse.pool_sessions_completed} / {currentCourse.pool_sessions_total || '-'}회
-                            </span>
-                        </div>
-                    </div>
+                    {(() => {
+                        const minPoolSessions = currentCourse.session_count || 3
+                        const totalSteps = 1 + minPoolSessions
+                        const currentSteps = (currentCourse.theory_completed ? 1 : 0) + currentCourse.pool_sessions_completed
+                        const completedPercentage = Math.min((currentSteps / totalSteps) * 100, 100)
+                        
+                        return (
+                            <>
+                                <div className="flex justify-between items-center mb-4">
+                                    <div>
+                                        <span className="text-xs font-semibold text-blue-600 bg-blue-50 px-2 py-1 rounded">
+                                            {currentCourse.course_level} 과정
+                                        </span>
+                                        <h3 className="font-bold text-lg mt-1">
+                                            {currentCourse.status === 'in_progress' ? <span className="flex items-center gap-1">교육 진행중 <Flame className="w-5 h-5 text-orange-500" /></span> : <span className="flex items-center gap-1">수료 완료 <PartyPopper className="w-5 h-5 text-yellow-500" /></span>}
+                                        </h3>
+                                    </div>
+                                    <div className="text-right">
+                                         <span className="text-2xl font-bold text-slate-900">
+                                            {Math.round(completedPercentage)}%
+                                         </span>
+                                    </div>
+                                </div>
+                                
+                                <Progress value={completedPercentage} className="h-3 mb-4" />
+                                
+                                <div className="grid grid-cols-2 gap-4 text-sm">
+                                    <div className="bg-slate-50 p-3 rounded-lg flex items-center justify-between">
+                                        <span className="text-slate-500">이론 교육</span>
+                                        <span className={`font-bold ${currentCourse.theory_completed ? 'text-blue-600' : 'text-slate-400'}`}>
+                                            {currentCourse.theory_completed ? '완료' : '미완료'}
+                                        </span>
+                                    </div>
+                                    <div className="bg-slate-50 p-3 rounded-lg flex items-center justify-between">
+                                        <span className="text-slate-500">풀장 교육</span>
+                                        <span className="font-bold text-slate-900">
+                                            {currentCourse.pool_sessions_completed} / {minPoolSessions}회
+                                        </span>
+                                    </div>
+                                </div>
+                            </>
+                        )
+                    })()}
                 </CardContent>
             </Card>
         )}
@@ -248,8 +265,8 @@ export function DashboardHome({
                                 <Badge variant="outline" className="text-slate-300 border-slate-600 mb-2">
                                     {new Date(latestDebriefing.created_at).toLocaleDateString()}
                                 </Badge>
-                                <CardTitle className="text-base text-slate-100">
-                                    강사 피드백 도착 💌
+                                <CardTitle className="text-base text-slate-100 flex items-center gap-2">
+                                    강사 피드백 도착 <Mail className="w-4 h-4 text-blue-300" />
                                 </CardTitle>
                             </div>
                             <ArrowRight className="text-slate-400 w-5 h-5" />
@@ -264,6 +281,13 @@ export function DashboardHome({
             </Link>
           </section>
       )}
+
+      {/* 다가오는 수업 클릭 시 뜨는 모달 */}
+      <UpcomingClassDialog
+        reservation={selectedReservation}
+        isOpen={!!selectedReservation}
+        onClose={() => setSelectedReservation(null)}
+      />
     </div>
   )
 }

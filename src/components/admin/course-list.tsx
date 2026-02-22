@@ -49,6 +49,7 @@ export interface Course {
     sort_order: number
     features?: string[]
     session_count?: number
+    required_skills?: any[]
 }
 
 import { toast } from "sonner"

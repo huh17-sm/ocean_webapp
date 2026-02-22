@@ -8,6 +8,7 @@ import {
 } from "@/app/admin/actions/credits";
 import { getSupabaseAdmin } from "@/utils/supabase/admin";
 import type { ReservationWithClass } from "@/types";
+import { REFUND_POLICY } from "@/lib/constants";
 
 export async function reserveClass(classId: string) {
   const supabase = await createClient();
@@ -197,19 +198,29 @@ export async function cancelReservation(reservationId: string) {
     return { error: "출석 완료된 예약은 취소할 수 없습니다." };
   }
 
-  // 2-2. 수업 시작 24시간 전부터 취소 불가
+  // 2-2. 수업 시작일 기준 취소/환불 정책 적용
+  let diffDays = -1;
   if (reservation.classes?.date) {
     const classTime = reservation.classes.time || "00:00:00";
     const classDateTime = new Date(`${reservation.classes.date}T${classTime}`);
     const now = new Date();
-    const hoursDiff = (classDateTime.getTime() - now.getTime()) / (1000 * 60 * 60);
 
     if (classDateTime < now) {
       return { error: "이미 지난 수업은 취소할 수 없습니다." };
     }
 
-    if (hoursDiff < 24) {
-      return { error: "수업 시작 24시간 전부터는 취소할 수 없습니다." };
+    // 날짜 차이 계산 (시간 무시, 자정 기준)
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const classDateOnly = new Date(
+      classDateTime.getFullYear(),
+      classDateTime.getMonth(),
+      classDateTime.getDate()
+    );
+    const diffTime = classDateOnly.getTime() - today.getTime();
+    diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+    if (diffDays <= REFUND_POLICY.SAME_DAY.daysBefore) {
+      return { error: REFUND_POLICY.SAME_DAY.message };
     }
   }
 
@@ -238,23 +249,42 @@ export async function cancelReservation(reservationId: string) {
     const classType = reservation.classes.type;
 
     // 원래 차감된 금액 기반 환불 (설정 변경에 영향받지 않음)
-    let refundAmount = reservation.credit_cost;
-    if (!refundAmount || refundAmount <= 0) {
+    let baseRefundAmount = reservation.credit_cost;
+    if (!baseRefundAmount || baseRefundAmount <= 0) {
       // 레거시 예약 (credit_cost 미기록): 현재 설정값으로 폴백
       const { data: typeSetting } = await supabase
         .from("class_type_settings")
         .select("credit_cost")
         .eq("type", classType)
         .single();
-      refundAmount = typeSetting?.credit_cost ?? 1;
+      baseRefundAmount = typeSetting?.credit_cost ?? 1;
     }
 
-    if (refundAmount > 0) {
+    let finalRefundAmount = baseRefundAmount;
+    let memoOverride = "";
+
+    // D-Day 기준 환불 비율 적용
+    if (
+      diffDays >= REFUND_POLICY.ONE_TO_THREE_DAYS.daysBeforeStart &&
+      diffDays <= REFUND_POLICY.ONE_TO_THREE_DAYS.daysBeforeEnd
+    ) {
+      finalRefundAmount = baseRefundAmount * REFUND_POLICY.ONE_TO_THREE_DAYS.refundRate;
+      memoOverride = `${classType} 취소 환불 (${finalRefundAmount}C, 80% 차감 적용)`;
+    } else if (diffDays >= REFUND_POLICY.FOUR_OR_MORE_DAYS.daysBefore) {
+      finalRefundAmount = baseRefundAmount * REFUND_POLICY.FOUR_OR_MORE_DAYS.refundRate;
+      memoOverride = `${classType} 취소 전액 환불 (${finalRefundAmount}C)`;
+    } else {
+      // 예외 폴백 (거의 발생 안 함)
+      memoOverride = `${classType} 취소 환불 (${finalRefundAmount}C)`;
+    }
+
+    if (finalRefundAmount > 0) {
       const refundResult = await refundCreditsForCancellation(
         user.id,
-        refundAmount,
+        finalRefundAmount,
         reservationId,
         classType,
+        memoOverride
       );
 
       if (!refundResult.success) {

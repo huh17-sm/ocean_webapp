@@ -126,51 +126,52 @@ export function AdminHome({ stats, pendingCourseRequests = [] }: AdminHomeProps)
                   {todayClasses.map((cls) => (
                     <div
                       key={cls.id}
-                      className="flex items-center justify-between p-4 bg-white border rounded-lg hover:shadow-md transition-all hover:border-blue-200 group"
+                      className="flex flex-col 2xl:flex-row 2xl:items-center justify-between gap-4 p-4 bg-white border rounded-lg hover:shadow-md transition-all hover:border-blue-200 group"
                     >
-                      <div className="flex items-center gap-4">
-                        <div className="flex flex-col items-center justify-center w-14 h-14 bg-blue-50 text-blue-700 rounded-lg group-hover:bg-blue-600 group-hover:text-white transition-colors">
+                      <div className="flex items-start sm:items-center gap-4 min-w-0 w-full">
+                        <div className="flex shrink-0 flex-col items-center justify-center w-14 h-14 bg-blue-50 text-blue-700 rounded-lg group-hover:bg-blue-600 group-hover:text-white transition-colors">
                           <span className="text-lg font-bold">{cls.time.substring(0, 5)}</span>
                         </div>
-                        <div>
-                            <div className="flex items-center gap-2 mb-1">
-                                <Badge variant="secondary" className="font-normal text-xs">
+                        <div className="min-w-0 flex-1 space-y-1">
+                            <div className="flex flex-wrap items-center gap-2">
+                                <Badge variant="secondary" className="font-normal text-xs shrink-0">
                                     {cls.class_type}
                                 </Badge>
-                                <span className="font-bold text-slate-800 text-lg">
-                                    {cls.class_name || cls.class_type + ' 수업'}
+                                <span className="font-bold text-slate-800 text-lg truncate block">
+                                    {cls.class_name || `${cls.class_type} 수업`}
                                 </span>
                             </div>
-                            <div className="flex items-center gap-3 text-sm text-slate-500">
-                                <span className="flex items-center gap-1">
-                                    <MapPin className="w-3.5 h-3.5" />
+                            <div className="flex flex-wrap flex-1 items-center gap-x-3 gap-y-1 text-sm text-slate-500 min-w-0">
+                                <span className="flex items-center gap-1 min-w-0 max-w-full">
+                                    <MapPin className="w-3.5 h-3.5 shrink-0" />
                                     {/* location이 string인 경우와 객체인 경우 모두 처리 */}
-                                    {typeof cls.location === 'string'
-                                      ? cls.location
-                                      : (cls.location?.name || (cls.location_id ? '수영장' : '장소 미정'))}
+                                    <span className="truncate">
+                                      {typeof cls.location === 'string'
+                                        ? cls.location
+                                        : (cls.location?.name || (cls.location_id ? '수영장' : '장소 미정'))}
+                                    </span>
                                 </span>
-                                <span className="flex items-center gap-1">
+                                <span className="flex items-center gap-1 shrink-0">
                                     <Users className="w-3.5 h-3.5" />
                                     예약 {cls.reservations && cls.reservations[0]?.count || 0}/{cls.max_students || cls.max_capacity}명
                                 </span>
                             </div>
                         </div>
                       </div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex shrink-0 items-center justify-end gap-2 w-full 2xl:w-auto 2xl:ml-4 sm:pl-18 2xl:pl-0">
                         <Button
                           variant="outline"
                           size="sm"
-                          className="gap-1.5 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-300"
+                          className="gap-1.5 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-300 flex-1 sm:flex-none"
                           onClick={() => handleOpenClassDetail(cls)}
                         >
-                          <Video className="w-3.5 h-3.5" />
-                          <span className="hidden sm:inline">디브리핑 & 미디어</span>
-                          <span className="sm:hidden">관리</span>
+                          <Video className="w-3.5 h-3.5 shrink-0" />
+                          <span className="whitespace-nowrap">디브리핑 & 미디어</span>
                         </Button>
-                        <Link href={`/admin/classes/availability?date=${cls.date}`}>
-                          <Button variant="outline" size="sm" className="gap-1.5">
-                            <ListChecks className="w-3.5 h-3.5" />
-                            <span className="hidden sm:inline">상세보기</span>
+                        <Link href={`/admin/classes/availability?date=${cls.date}`} className="flex-1 sm:flex-none">
+                          <Button variant="outline" size="sm" className="gap-1.5 w-full">
+                            <ListChecks className="w-3.5 h-3.5 shrink-0" />
+                            <span className="whitespace-nowrap">상세보기</span>
                           </Button>
                         </Link>
                       </div>

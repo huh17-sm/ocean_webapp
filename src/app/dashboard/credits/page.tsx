@@ -27,7 +27,7 @@ export default async function CreditsPage() {
 
   const formattedProfile = {
     ...profile,
-    credits: profile?.general_credits || 0
+    credits: Math.max(profile?.general_credits || 0, profile?.credits || 0)
   }
 
   return <CreditsView profile={formattedProfile} transactions={creditTransactions} />

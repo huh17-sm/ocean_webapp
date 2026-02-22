@@ -4,18 +4,13 @@ import { SkillCompletion } from '@/app/actions/progress'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { CheckCircle2, Circle } from 'lucide-react'
+import { SKILL_DEFINITIONS } from '@/lib/constants'
 
 interface SkillCompletionsCardProps {
   skills: SkillCompletion[]
 }
 
-const skillTypeLabels: Record<string, { label: string; emoji: string }> = {
-  static: { label: 'Static (스태틱)', emoji: '🧘' },
-  dynamic: { label: 'Dynamic (다이나믹)', emoji: '🏊' },
-  depth: { label: 'Depth (수심)', emoji: '🤿' },
-  rescue: { label: 'Rescue (구조)', emoji: '🆘' },
-  theory: { label: 'Theory (이론)', emoji: '📚' },
-}
+
 
 const levelLabels: Record<string, string> = {
   입문: '입문',
@@ -67,11 +62,7 @@ export function SkillCompletionsCard({ skills }: SkillCompletionsCardProps) {
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 {levelSkills.map((skill) => {
-                  const skillInfo =
-                    skillTypeLabels[skill.skill_type] || {
-                      label: skill.skill_type,
-                      emoji: '✅',
-                    }
+                  const defaultLabel = (SKILL_DEFINITIONS[level] || SKILL_DEFINITIONS['초급'])?.find(sd => sd.type === skill.skill_type)?.label || skill.skill_type
 
                   return (
                     <div
@@ -89,7 +80,7 @@ export function SkillCompletionsCard({ skills }: SkillCompletionsCardProps) {
                       )}
                       <div className="flex-1 min-w-0">
                         <p className="font-medium text-sm">
-                          {skillInfo.emoji} {skillInfo.label}
+                          {defaultLabel}
                         </p>
                         {skill.is_completed && skill.completed_at && (
                           <p className="text-xs text-slate-500 mt-1">

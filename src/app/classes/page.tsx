@@ -17,6 +17,15 @@ export default async function ClassesPage() {
         .eq('id', user.id)
         .single()
 
+    // 1.5. 사용자의 예약 내역 조회 (확정/출석완료)
+    const { data: reservations } = await supabase
+        .from('reservations')
+        .select('class_id')
+        .eq('user_id', user.id)
+        .in('status', ['confirmed', 'attended'])
+
+    const userReservedClassIds = reservations?.map(r => r.class_id) || []
+
     // 2. 전체 수업 목록 조회 (오늘 이후)
     const { data: classes } = await supabase
         .from('classes')
@@ -56,10 +65,11 @@ export default async function ClassesPage() {
 
                 <ClassCalendarView
                     initialClasses={classes || []}
-                    userCredits={profile?.general_credits ?? profile?.credits ?? 0}
+                    userCredits={Math.max(profile?.general_credits || 0, profile?.credits || 0)}
                     blockedPeriods={blocks || []}
                     pools={pools || []}
                     classTypeSettings={classTypeSettings || []}
+                    userReservedClassIds={userReservedClassIds}
                 />
             </div>
         </div>

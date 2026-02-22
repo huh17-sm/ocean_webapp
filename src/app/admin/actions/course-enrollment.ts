@@ -12,6 +12,7 @@
 
 import { createClient } from '@/utils/supabase/server'
 import { revalidatePath } from 'next/cache'
+import { requireAdmin } from '@/app/admin/utils/auth'
 
 // ============================================
 // 1. 과정 신청 승인 (크레딧 자동 지급)
@@ -33,27 +34,9 @@ export interface ApproveCourseRequestInput {
 export async function approveCourseRequest(
   input: ApproveCourseRequestInput
 ): Promise<{ success: boolean; message: string }> {
-  const supabase = await createClient()
-
   try {
     // 1. 관리자 권한 확인
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
-
-    if (!user) {
-      return { success: false, message: '로그인이 필요합니다.' }
-    }
-
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', user.id)
-      .single()
-
-    if (!profile || profile.role !== 'admin') {
-      return { success: false, message: '관리자 권한이 필요합니다.' }
-    }
+    const { user, supabase } = await requireAdmin()
 
     // 2. course_progress + courses 조인 조회
     const { data: progressWithCourse } = await supabase
@@ -185,27 +168,9 @@ export interface RejectCourseRequestInput {
 export async function rejectCourseRequest(
   input: RejectCourseRequestInput
 ): Promise<{ success: boolean; message: string }> {
-  const supabase = await createClient()
-
   try {
     // 1. 관리자 권한 확인
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
-
-    if (!user) {
-      return { success: false, message: '로그인이 필요합니다.' }
-    }
-
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', user.id)
-      .single()
-
-    if (!profile || profile.role !== 'admin') {
-      return { success: false, message: '관리자 권한이 필요합니다.' }
-    }
+    const { supabase } = await requireAdmin()
 
     // 2. 신청 조회
     const { data: progress } = await supabase
@@ -274,27 +239,9 @@ export interface AssignCourseInput {
 export async function assignCourseToUser(
   input: AssignCourseInput
 ): Promise<{ success: boolean; message: string; progressId?: number }> {
-  const supabase = await createClient()
-
   try {
     // 1. 관리자 권한 확인
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
-
-    if (!user) {
-      return { success: false, message: '로그인이 필요합니다.' }
-    }
-
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', user.id)
-      .single()
-
-    if (!profile || profile.role !== 'admin') {
-      return { success: false, message: '관리자 권한이 필요합니다.' }
-    }
+    const { user, supabase } = await requireAdmin()
 
     // 2. 과정 정보 조회
     const { data: course } = await supabase
@@ -455,29 +402,9 @@ export interface PendingCourseRequest {
  * - 크레딧 금액도 함께 반환
  */
 export async function getPendingCourseRequests(): Promise<PendingCourseRequest[]> {
-  const supabase = await createClient()
-
   try {
     // 1. 관리자 권한 확인
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
-
-    if (!user) {
-      console.warn('No user logged in for getPendingCourseRequests')
-      return []
-    }
-
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', user.id)
-      .single()
-
-    if (!profile || profile.role !== 'admin') {
-      console.warn('User is not admin for getPendingCourseRequests')
-      return []
-    }
+    const { supabase } = await requireAdmin()
 
     // 2. pending 신청 조회 (courses 조인으로 크레딧 정보도 함께 가져옴)
     const { data, error } = await supabase

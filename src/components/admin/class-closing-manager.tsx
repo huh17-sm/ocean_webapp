@@ -9,7 +9,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
 import { Checkbox } from '@/components/ui/checkbox'
 import { useToast } from '@/hooks/use-toast'
-import { Loader2, Save, Link as LinkIcon, CheckCircle2, Circle } from 'lucide-react'
+import { Loader2, Save, Link as LinkIcon, CheckCircle2, Circle, Target, Sparkles, TrendingUp, GraduationCap } from 'lucide-react'
 // Actions
 import { saveDebriefingBulk } from '@/app/admin/actions/debriefings'
 import { updateClassMediaLink, completeReservation } from '@/app/admin/actions'
@@ -176,7 +176,7 @@ export function ClassClosingManager({
                         onCheckedChange={(checked) => updateField(r.id, 'mark_attended', checked)}
                     />
                     <Label htmlFor={`attended-${r.id}`} className="cursor-pointer font-medium">
-                        {isAttended ? '출석 완료 ✅' : '출석 전'}
+                        {isAttended ? <span className="flex items-center gap-1">출석 완료 <CheckCircle2 className="w-4 h-4 text-green-500" /></span> : '출석 전'}
                     </Label>
                   </div>
                 </div>
@@ -184,7 +184,7 @@ export function ClassClosingManager({
                 {/* Debriefing Inputs */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                        <Label className="text-xs text-slate-500 mb-1 block">🎯 수행 평가 (Performance)</Label>
+                        <Label className="text-xs text-slate-500 mb-1 flex items-center gap-1"><Target className="w-3 h-3 text-blue-500"/> 수행 평가 (Performance)</Label>
                         <Textarea 
                             value={data.performance}
                             onChange={(e) => updateField(r.id, 'performance', e.target.value)}
@@ -193,7 +193,7 @@ export function ClassClosingManager({
                         />
                     </div>
                     <div>
-                        <Label className="text-xs text-slate-500 mb-1 block">✨ 잘한 점 (Strengths)</Label>
+                        <Label className="text-xs text-slate-500 mb-1 flex items-center gap-1"><Sparkles className="w-3 h-3 text-green-500"/> 잘한 점 (Strengths)</Label>
                         <Textarea 
                             value={data.strengths}
                             onChange={(e) => updateField(r.id, 'strengths', e.target.value)}
@@ -202,7 +202,7 @@ export function ClassClosingManager({
                         />
                     </div>
                     <div>
-                        <Label className="text-xs text-slate-500 mb-1 block">📈 개선 포인트 (Improvement)</Label>
+                        <Label className="text-xs text-slate-500 mb-1 flex items-center gap-1"><TrendingUp className="w-3 h-3 text-orange-500"/> 개선 포인트 (Improvement)</Label>
                         <Textarea 
                             value={data.improvement}
                             onChange={(e) => updateField(r.id, 'improvement', e.target.value)}
@@ -211,7 +211,7 @@ export function ClassClosingManager({
                         />
                     </div>
                     <div>
-                        <Label className="text-xs text-slate-500 mb-1 block">🎓 다음 목표 (Next Goal)</Label>
+                        <Label className="text-xs text-slate-500 mb-1 flex items-center gap-1"><GraduationCap className="w-3 h-3 text-purple-500"/> 다음 목표 (Next Goal)</Label>
                         <Textarea 
                             value={data.next_goal}
                             onChange={(e) => updateField(r.id, 'next_goal', e.target.value)}

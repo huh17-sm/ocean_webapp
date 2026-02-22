@@ -12,13 +12,15 @@ import { toast } from 'sonner'
 import { cancelReservation } from '@/app/classes/actions'
 import { useRouter } from 'next/navigation'
 
+import { CLASS_TYPES } from '@/lib/constants'
+
 interface ReservationsViewProps {
   reservations: any[]
 }
 
 export function ReservationsView({ reservations }: ReservationsViewProps) {
   const router = useRouter()
-  const [filter, setFilter] = useState<'all' | 'confirmed' | 'completed' | 'cancelled'>('all')
+  const [filter, setFilter] = useState<'all' | 'confirmed' | 'attended' | 'cancelled'>('all')
   const [isLoading, setIsLoading] = useState<string | null>(null)
 
   const filteredReservations = reservations.filter((r) => {
@@ -30,7 +32,7 @@ export function ReservationsView({ reservations }: ReservationsViewProps) {
     switch (status) {
       case 'confirmed':
         return <Badge variant="default">예정</Badge>
-      case 'completed':
+      case 'attended':
         return <Badge variant="secondary">완료</Badge>
       case 'cancelled':
         return <Badge variant="destructive">취소</Badge>
@@ -68,7 +70,10 @@ export function ReservationsView({ reservations }: ReservationsViewProps) {
           </Button>
         </Link>
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-slate-900">📅 내 예약 현황</h1>
+          <h1 className="text-2xl md:text-3xl font-bold text-slate-900 flex items-center gap-2">
+            <Calendar className="h-6 w-6 text-blue-500" />
+            내 예약 현황
+          </h1>
           <p className="text-slate-500 mt-1">수업 예약 내역을 확인하고 관리하세요</p>
         </div>
       </div>
@@ -78,7 +83,7 @@ export function ReservationsView({ reservations }: ReservationsViewProps) {
         <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="all">전체</TabsTrigger>
           <TabsTrigger value="confirmed">예정</TabsTrigger>
-          <TabsTrigger value="completed">완료</TabsTrigger>
+          <TabsTrigger value="attended">완료</TabsTrigger>
           <TabsTrigger value="cancelled">취소</TabsTrigger>
         </TabsList>
 
@@ -102,7 +107,9 @@ export function ReservationsView({ reservations }: ReservationsViewProps) {
                     <div className="flex justify-between items-start mb-4">
                       <div className="flex items-center gap-2">
                         {getStatusBadge(reservation.status)}
-                        <Badge variant="outline">{reservation.classes?.type}</Badge>
+                        <Badge variant="outline">
+                          {CLASS_TYPES[reservation.classes?.type as keyof typeof CLASS_TYPES] || reservation.classes?.type}
+                        </Badge>
                       </div>
                       <div className="text-right text-sm text-slate-500">
                         {new Date(reservation.created_at).toLocaleDateString('ko-KR')}
@@ -166,7 +173,7 @@ export function ReservationsView({ reservations }: ReservationsViewProps) {
                           </Button>
                         )}
 
-                      {reservation.status === 'completed' && (
+                      {reservation.status === 'attended' && (
                         <>
                           <Link href={`/dashboard/progress`} className="flex-1">
                             <Button variant="outline" size="sm" className="w-full">

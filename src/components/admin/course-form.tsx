@@ -18,7 +18,16 @@ export interface CourseFormData {
     classTypeId?: string
     sessionCount?: number | ''
     features: string[]
+    requiredSkills?: { type: string; requirement: string }[]
 }
+
+const AVAILABLE_SKILLS = [
+    { type: 'theory', label: '이론 교육' },
+    { type: 'static', label: '스태틱 (숨참기)' },
+    { type: 'dynamic', label: '다이나믹 (잠영)' },
+    { type: 'depth', label: '수심 (컨스탄트웨이트)' },
+    { type: 'rescue', label: '레스큐 (구조)' }
+]
 
 interface CourseFormProps {
     initialData?: CourseFormData
@@ -31,6 +40,21 @@ interface CourseFormProps {
 export function CourseForm({ initialData, onSubmit, isPending = false, submitLabel = "저장", classTypes = [] }: CourseFormProps) {
     const [features, setFeatures] = useState<string[]>(initialData?.features || [])
     const [newFeature, setNewFeature] = useState('')
+    const [requiredSkills, setRequiredSkills] = useState<{ type: string; requirement: string }[]>(
+        initialData?.requiredSkills || []
+    )
+
+    const handleSkillToggle = (type: string, checked: boolean) => {
+        if (checked) {
+            setRequiredSkills(prev => [...prev, { type, requirement: '' }])
+        } else {
+            setRequiredSkills(prev => prev.filter(s => s.type !== type))
+        }
+    }
+
+    const handleSkillRequirementChange = (type: string, requirement: string) => {
+        setRequiredSkills(prev => prev.map(s => s.type === type ? { ...s, requirement } : s))
+    }
 
     const handleAddFeature = () => {
         if (!newFeature.trim()) return
@@ -47,6 +71,7 @@ export function CourseForm({ initialData, onSubmit, isPending = false, submitLab
         const form = e.currentTarget
         const formData = new FormData(form)
         formData.set('features', JSON.stringify(features))
+        formData.set('required_skills', JSON.stringify(requiredSkills))
         onSubmit(formData)
     }
 
@@ -175,6 +200,43 @@ export function CourseForm({ initialData, onSubmit, isPending = false, submitLab
                             </button>
                         </div>
                     ))}
+                </div>
+            </div>
+
+            <div className="space-y-3 pt-4 border-t">
+                <Label>필수 스킬 설정 (상세 기준 포함)</Label>
+                <div className="bg-slate-50 border rounded-md p-4 space-y-4">
+                    <p className="text-xs text-slate-500 flex items-center justify-between pb-2 border-b">
+                        이 과정에서 이수해야 할 대상 스킬을 체크하고, 세부 합격 기준을 적어주세요. 
+                        <span>예: 1분 30초, 수심 12m</span>
+                    </p>
+                    {AVAILABLE_SKILLS.map(skill => {
+                        const existingSkill = requiredSkills.find(s => s.type === skill.type)
+                        const isChecked = !!existingSkill
+
+                        return (
+                            <div key={skill.type} className="flex items-center gap-3">
+                                <label className="flex items-center gap-2 text-sm font-medium w-36 cursor-pointer hover:text-blue-600 transition-colors">
+                                    <input
+                                        type="checkbox"
+                                        className="rounded border-slate-300 w-4 h-4 cursor-pointer"
+                                        checked={isChecked}
+                                        onChange={(e) => handleSkillToggle(skill.type, e.target.checked)}
+                                    />
+                                    {skill.label}
+                                </label>
+                                {isChecked && (
+                                    <Input 
+                                        type="text"
+                                        value={existingSkill.requirement}
+                                        onChange={(e) => handleSkillRequirementChange(skill.type, e.target.value)}
+                                        placeholder="목표 기준치 (예: 2분)"
+                                        className="flex-1 h-9 bg-white"
+                                    />
+                                )}
+                            </div>
+                        )
+                    })}
                 </div>
             </div>
 

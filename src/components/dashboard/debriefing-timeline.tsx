@@ -15,6 +15,7 @@ import {
   Image as ImageIcon,
 } from 'lucide-react'
 import Link from 'next/link'
+import { CLASS_TYPES } from '@/lib/constants'
 
 interface DebriefingTimelineProps {
   debriefings: MyDebriefing[]
@@ -81,14 +82,14 @@ function DebriefingTimelineItem({ debriefing }: { debriefing: MyDebriefing }) {
             <div>
               <div className="flex items-center gap-2 mb-2">
                 <Badge variant={isRecent ? 'default' : 'secondary'}>
-                  {classInfo.type}
+                  {CLASS_TYPES[classInfo.type as keyof typeof CLASS_TYPES] || classInfo.type}
                 </Badge>
                 <div className="md:hidden text-sm font-medium text-slate-500">
                   {classInfo.date}
                 </div>
               </div>
               <CardTitle className="text-lg flex items-center gap-2">
-                {classInfo.location} 수업 피드백
+                {CLASS_TYPES[classInfo.type as keyof typeof CLASS_TYPES] || classInfo.type} - {classInfo.title || classInfo.location}
               </CardTitle>
             </div>
             

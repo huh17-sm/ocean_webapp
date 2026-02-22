@@ -13,6 +13,7 @@ import { useState, useMemo } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
+import { Checkbox } from '@/components/ui/checkbox'
 import {
   Select,
   SelectContent,
@@ -35,9 +36,20 @@ interface StudentTableProps {
   students: StudentEnrollmentSummary[]
   onStudentClick: (userId: string, courseLevel: string) => void
   emptyMessage?: string
+  /** 다중 선택 모드 활성화 (휴지통 등에서 사용) */
+  selectable?: boolean
+  selectedIds?: number[]
+  onSelectionChange?: (ids: number[]) => void
 }
 
-export function StudentTable({ students, onStudentClick, emptyMessage }: StudentTableProps) {
+export function StudentTable({
+  students,
+  onStudentClick,
+  emptyMessage,
+  selectable = false,
+  selectedIds = [],
+  onSelectionChange,
+}: StudentTableProps) {
   // 검색어 및 과정 필터
   const [searchQuery, setSearchQuery] = useState('')
   const [levelFilter, setLevelFilter] = useState<string>('all')
@@ -70,7 +82,30 @@ export function StudentTable({ students, onStudentClick, emptyMessage }: Student
   const courseLevels = useMemo(() => {
     return [...new Set(students.map((s) => s.courseLevel))]
   }, [students])
+  // 전체 선택 핸들러
+  const handleSelectAll = (checked: boolean) => {
+    if (!onSelectionChange) return
+    if (checked) {
+      const allIds = filteredStudents.map((s) => s.courseProgressId)
+      onSelectionChange(allIds)
+    } else {
+      onSelectionChange([])
+    }
+  }
 
+  // 개별 선택 핸들러
+  const handleSelectRow = (progressId: number, checked: boolean) => {
+    if (!onSelectionChange) return
+    if (checked) {
+      onSelectionChange([...selectedIds, progressId])
+    } else {
+      onSelectionChange(selectedIds.filter((id) => id !== progressId))
+    }
+  }
+
+  const isAllSelected =
+    filteredStudents.length > 0 && selectedIds.length === filteredStudents.length
+  
   return (
     <Card>
       <CardHeader className="pb-3">
@@ -101,6 +136,21 @@ export function StudentTable({ students, onStudentClick, emptyMessage }: Student
             </SelectContent>
           </Select>
         </div>
+        {selectable && filteredStudents.length > 0 && (
+          <div className="flex items-center gap-2 mt-4 px-1">
+            <Checkbox
+              id="select-all"
+              checked={isAllSelected}
+              onCheckedChange={handleSelectAll}
+            />
+            <label
+              htmlFor="select-all"
+              className="text-sm font-medium leading-none cursor-pointer"
+            >
+              현재 목록 전체 선택 ({selectedIds.length}/{filteredStudents.length})
+            </label>
+          </div>
+        )}
       </CardHeader>
 
       <CardContent className="pt-0">
@@ -115,11 +165,14 @@ export function StudentTable({ students, onStudentClick, emptyMessage }: Student
           <div className="space-y-2">
             {filteredStudents.map((student) => (
               <StudentRow
-                key={`${student.userId}_${student.courseLevel}`}
+                key={`${student.userId}_${student.courseLevel}_${student.courseProgressId}`}
                 student={student}
                 onClick={() =>
                   onStudentClick(student.userId, student.courseLevel)
                 }
+                selectable={selectable}
+                isSelected={selectedIds.includes(student.courseProgressId)}
+                onToggleSelect={(checked) => handleSelectRow(student.courseProgressId, checked)}
               />
             ))}
           </div>
@@ -136,9 +189,15 @@ export function StudentTable({ students, onStudentClick, emptyMessage }: Student
 function StudentRow({
   student,
   onClick,
+  selectable,
+  isSelected,
+  onToggleSelect,
 }: {
   student: StudentEnrollmentSummary
   onClick: () => void
+  selectable?: boolean
+  isSelected?: boolean
+  onToggleSelect?: (checked: boolean) => void
 }) {
   // 스킬 완료 퍼센트 계산
   const skillPercent =
@@ -150,14 +209,24 @@ function StudentRow({
   const certBadge = getCertBadge(student.certStatus)
 
   return (
-    <button
-      onClick={onClick}
-      className="w-full flex items-center gap-3 p-3 rounded-lg border border-slate-200 hover:border-blue-300 hover:bg-blue-50/50 transition-colors text-left group"
-    >
-      {/* 학생 아바타 */}
-      <div className="flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white font-bold text-sm">
-        {student.userName.charAt(0)}
-      </div>
+    <div className="flex items-center gap-2 group w-full">
+      {selectable && onToggleSelect && (
+        <div className="pl-3">
+          <Checkbox
+            checked={isSelected}
+            onCheckedChange={onToggleSelect}
+            className="w-5 h-5"
+          />
+        </div>
+      )}
+      <button
+        onClick={onClick}
+        className="flex-1 flex items-center gap-3 p-3 rounded-lg border border-slate-200 hover:border-blue-300 hover:bg-blue-50/50 transition-colors text-left"
+      >
+        {/* 학생 아바타 */}
+        <div className="flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white font-bold text-sm">
+          {student.userName.charAt(0)}
+        </div>
 
       {/* 학생 정보 */}
       <div className="flex-1 min-w-0 space-y-1">
@@ -209,7 +278,8 @@ function StudentRow({
 
       {/* 화살표 */}
       <ChevronRight className="h-4 w-4 text-slate-400 group-hover:text-blue-500 flex-shrink-0 transition-colors" />
-    </button>
+      </button>
+    </div>
   )
 }
 

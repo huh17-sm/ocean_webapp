@@ -1,5 +1,6 @@
 import { Metadata } from 'next'
 import { PolicyLayout } from '@/components/layout/policy-layout'
+import { HelpCircle } from 'lucide-react'
 
 export const metadata: Metadata = {
   title: '자주 묻는 질문 - Ocean Freediving',
@@ -10,8 +11,8 @@ export default function FAQPage() {
   return (
     <PolicyLayout title="자주 묻는 질문 (FAQ)">
       <div className="space-y-6">
-        <div className="text-center py-12">
-          <div className="text-6xl mb-4">❓</div>
+        <div className="text-center py-12 flex flex-col items-center">
+          <HelpCircle className="h-16 w-16 text-slate-500 mb-4" />
           <h2 className="text-2xl font-bold text-slate-900 mb-2">자주 묻는 질문</h2>
           <p className="text-slate-600">
             현재 FAQ 내용을 작성 중입니다.

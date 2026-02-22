@@ -28,6 +28,8 @@ export interface CourseProgress {
   notes: string | null
   created_at: string
   updated_at: string
+  session_count?: number // 추가된 속성
+  required_skills?: { type: string; requirement: string }[] // 추가된 속성
 }
 
 /**
@@ -65,7 +67,29 @@ export async function getMyCourseProgress(): Promise<CourseProgress[]> {
     return []
   }
 
-  return data || []
+  // 3. 과정(courses) 정보 조회하여 session_count, required_skills 매핑
+  const { data: coursesData, error: coursesError } = await supabase
+    .from('courses')
+    .select('level, session_count, required_skills')
+
+  let courseSessionMap: Record<string, number> = {}
+  let courseSkillsMap: Record<string, any[]> = {}
+  
+  if (!coursesError && coursesData) {
+    coursesData.forEach(current => {
+      courseSessionMap[current.level] = current.session_count || 3
+      courseSkillsMap[current.level] = current.required_skills || []
+    })
+  }
+
+  // 매핑 데이터 리턴
+  const enrichedData = (data || []).map(p => ({
+    ...p,
+    session_count: courseSessionMap[p.course_level] || 3, // 못 찾을 경우 3 기본값
+    required_skills: courseSkillsMap[p.course_level] || []
+  }))
+
+  return enrichedData
 }
 
 /**
@@ -199,6 +223,7 @@ export interface MyDebriefing {
       type: string
       location: string
       media_link: string | null
+      title: string | null
     }
   }
   instructor?: {
@@ -229,7 +254,7 @@ export async function getMyDebriefings(): Promise<MyDebriefing[]> {
       reservation:reservations!inner(
         class_id,
         user_id,
-        classes(date, time, type, location, media_link)
+        classes(date, time, type, location, media_link, title)
       ),
       instructor:profiles!debriefings_instructor_id_fkey(name)
     `
@@ -276,7 +301,7 @@ export async function getDebriefingByReservation(
       reservation:reservations!inner(
         class_id,
         user_id,
-        classes(date, time, type, location, media_link)
+        classes(date, time, type, location, media_link, title)
       ),
       instructor:profiles!debriefings_instructor_id_fkey(name)
     `
@@ -301,21 +326,37 @@ export interface MyProgressSummary {
   courseProgress: CourseProgress[]
   skillCompletions: SkillCompletion[]
   debriefings: MyDebriefing[]
+  certificates?: any[]
 }
 
 /**
  * 사용자의 전체 진도 현황 조회
  */
 export async function getMyProgressSummary(): Promise<MyProgressSummary> {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
   const [courseProgress, skillCompletions, debriefings] = await Promise.all([
     getMyCourseProgress(),
     getMySkillCompletions(),
     getMyDebriefings(),
   ])
 
+  let certificates = []
+  if (user) {
+    const { data } = await supabase
+      .from('certificates')
+      .select('*')
+      .eq('user_id', user.id)
+    certificates = data || []
+  }
+
   return {
     courseProgress,
     skillCompletions,
     debriefings,
+    certificates,
   }
 }

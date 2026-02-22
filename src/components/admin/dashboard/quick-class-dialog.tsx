@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { TimePicker } from '@/components/ui/time-picker'
 import {
     Select,
     SelectContent,
@@ -133,14 +134,7 @@ export function QuickClassDialog({ trigger, defaultDate, onSuccess }: QuickClass
                     {/* Time */}
                     <div className="grid gap-2">
                         <Label htmlFor="time">시간</Label>
-                        <Input
-                            id="time"
-                            name="time"
-                            type="time"
-                            required
-                            value={time}
-                            onChange={(e) => setTime(e.target.value)}
-                        />
+                        <TimePicker name="time" required value={time} onChange={setTime} />
                     </div>
 
                     {/* Max Capacity */}

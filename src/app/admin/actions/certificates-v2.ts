@@ -108,6 +108,7 @@ export async function approveCertificate(
   input: ApproveCertificateInput
 ): Promise<{ success: boolean; message: string }> {
   const supabase = await createClient()
+  const supabaseAdmin = getSupabaseAdmin()
 
   try {
     // 1. 관리자 권한 확인
@@ -137,7 +138,7 @@ export async function approveCertificate(
       .single()
 
     if (!certificate) {
-      return { success: false, message: '자격증 정보를 찾을 수 없습니다.' }
+      return { success: false, message: '자격증 정보를 찾을 수 없습니다. (DB 조회 결과 없음 또는 권한 부족)' }
     }
 
     if (certificate.status !== 'pending') {
@@ -148,7 +149,7 @@ export async function approveCertificate(
     }
 
     // 3. 승인 처리
-    const { error: updateError } = await supabase
+    const { error: updateError } = await supabaseAdmin
       .from('certificates')
       .update({
         status: 'approved',
@@ -159,7 +160,7 @@ export async function approveCertificate(
 
     if (updateError) {
       console.error('Error approving certificate:', updateError)
-      return { success: false, message: '승인 처리에 실패했습니다.' }
+      return { success: false, message: `승인 처리에 실패했습니다. (${updateError.message})` }
     }
 
     revalidatePath('/mypage')
@@ -170,7 +171,7 @@ export async function approveCertificate(
     console.error('Error in approveCertificate:', error)
     return {
       success: false,
-      message: '승인 처리 중 오류가 발생했습니다.',
+      message: `승인 처리 중 시스템 오류가 발생했습니다. (${(error as Error).message})`,
     }
   }
 }
@@ -192,6 +193,7 @@ export async function rejectCertificate(
   input: RejectCertificateInput
 ): Promise<{ success: boolean; message: string }> {
   const supabase = await createClient()
+  const supabaseAdmin = getSupabaseAdmin()
 
   try {
     // 1. 관리자 권한 확인
@@ -232,7 +234,7 @@ export async function rejectCertificate(
     }
 
     // 3. 거부 처리
-    const { error: updateError } = await supabase
+    const { error: updateError } = await supabaseAdmin
       .from('certificates')
       .update({
         status: 'rejected',
@@ -243,7 +245,7 @@ export async function rejectCertificate(
 
     if (updateError) {
       console.error('Error rejecting certificate:', updateError)
-      return { success: false, message: '거부 처리에 실패했습니다.' }
+      return { success: false, message: `거부 처리에 실패했습니다. (${updateError.message})` }
     }
 
     revalidatePath('/mypage')
@@ -254,7 +256,7 @@ export async function rejectCertificate(
     console.error('Error in rejectCertificate:', error)
     return {
       success: false,
-      message: '거부 처리 중 오류가 발생했습니다.',
+      message: `거부 처리 중 시스템 오류가 발생했습니다. (${(error as Error).message})`,
     }
   }
 }
@@ -276,6 +278,7 @@ export async function issueCertificate(
   input: IssueCertificateInput
 ): Promise<{ success: boolean; message: string }> {
   const supabase = await createClient()
+  const supabaseAdmin = getSupabaseAdmin()
 
   try {
     // 1. 관리자 권한 확인
@@ -298,9 +301,10 @@ export async function issueCertificate(
     }
 
     // 2. 자격증 정보 확인
+    // 2. 자격증 정보 확인
     const { data: certificate } = await supabase
       .from('certificates')
-      .select('id, status')
+      .select('id, status, user_id, certificate_level')
       .eq('id', input.certificate_id)
       .single()
 
@@ -330,7 +334,7 @@ export async function issueCertificate(
     }
 
     // 4. 발급 처리
-    const { error: updateError } = await supabase
+    const { error: updateError } = await supabaseAdmin
       .from('certificates')
       .update({
         status: 'issued',
@@ -342,18 +346,34 @@ export async function issueCertificate(
 
     if (updateError) {
       console.error('Error issuing certificate:', updateError)
-      return { success: false, message: '발급 처리에 실패했습니다.' }
+      return { success: false, message: `발급 처리에 실패했습니다. (${updateError.message})` }
+    }
+
+    // 5. 해당 레벨의 진행 중인 코스를 수료(completed) 상태로 변경 
+    const { error: progressError } = await supabaseAdmin
+      .from('course_progress')
+      .update({
+        status: 'completed',
+        completed_at: new Date().toISOString()
+      })
+      .eq('user_id', certificate.user_id)
+      .eq('course_level', certificate.certificate_level)
+      .eq('status', 'in_progress')
+
+    if (progressError) {
+      console.error('Error updating course progress:', progressError)
+      // 자격증은 발급되었으므로 사용자에게 에러를 반환하지 않고 로깅 처리
     }
 
     revalidatePath('/mypage')
     revalidatePath('/admin/certificates')
 
-    return { success: true, message: '자격증이 발급되었습니다.' }
+    return { success: true, message: '자격증이 발급되었으며 과정이 수료 처리되었습니다.' }
   } catch (error) {
     console.error('Error in issueCertificate:', error)
     return {
       success: false,
-      message: '발급 처리 중 오류가 발생했습니다.',
+      message: `발급 처리 중 오류가 발생했습니다. (${(error as Error).message})`,
     }
   }
 }
@@ -377,6 +397,7 @@ export async function issueCertificateDirectly(
   input: DirectIssueCertificateInput
 ): Promise<{ success: boolean; message: string; certificateId?: number }> {
   const supabase = await createClient()
+  const supabaseAdmin = getSupabaseAdmin()
 
   try {
     // 1. 관리자 권한 확인
@@ -414,7 +435,7 @@ export async function issueCertificateDirectly(
 
     // 3. 자격증 직접 발급
     const now = new Date().toISOString()
-    const { data: certificate, error: createError } = await supabase
+    const { data: certificate, error: createError } = await supabaseAdmin
       .from('certificates')
       .insert({
         user_id: input.user_id,
@@ -432,7 +453,22 @@ export async function issueCertificateDirectly(
 
     if (createError || !certificate) {
       console.error('Error issuing certificate directly:', createError)
-      return { success: false, message: '자격증 발급에 실패했습니다.' }
+      return { success: false, message: `자격증 발급에 실패했습니다. (${createError?.message})` }
+    }
+
+    // 4. 해당 레벨의 진행 중인 코스를 수료(completed) 상태로 변경
+    const { error: progressError } = await supabaseAdmin
+      .from('course_progress')
+      .update({
+        status: 'completed',
+        completed_at: now
+      })
+      .eq('user_id', input.user_id)
+      .eq('course_level', input.certificate_level)
+      .eq('status', 'in_progress')
+      
+    if (progressError) {
+      console.error('Error updating course progress directly:', progressError)
     }
 
     revalidatePath('/mypage')
@@ -440,14 +476,14 @@ export async function issueCertificateDirectly(
 
     return {
       success: true,
-      message: '자격증이 발급되었습니다.',
+      message: '자격증이 직접 발급되었으며 과정이 수료 처리되었습니다.',
       certificateId: certificate.id,
     }
   } catch (error) {
     console.error('Error in issueCertificateDirectly:', error)
     return {
       success: false,
-      message: '자격증 발급 중 오류가 발생했습니다.',
+      message: `자격증 발급 중 오류가 발생했습니다. (${(error as Error).message})`,
     }
   }
 }
@@ -478,7 +514,7 @@ export async function getMyCertificates() {
 
   if (error) {
     console.error('Error fetching certificates:', error)
-    throw new Error('자격증 조회에 실패했습니다.')
+    throw new Error(`자격증 조회에 실패했습니다. (${error.message})`)
   }
 
   return data || []
@@ -502,7 +538,7 @@ export async function getAllCertificates() {
 
     if (certError) {
       console.error('Error fetching all certificates table:', JSON.stringify(certError, null, 2))
-      throw new Error('자격증 목록 조회에 실패했습니다.')
+      throw new Error(`자격증 목록 조회에 실패했습니다. (${certError.message})`)
     }
 
     if (!certificates || certificates.length === 0) {
@@ -534,7 +570,7 @@ export async function getAllCertificates() {
     return result
   } catch (error) {
     console.error('Error in getAllCertificates:', error)
-    throw new Error('자격증 전체 조회 중 오류가 발생했습니다.')
+    throw new Error(`자격증 전체 조회 중 오류가 발생했습니다. (${(error as Error).message})`)
   }
 }
 
@@ -554,7 +590,7 @@ export async function getPendingCertificates() {
 
     if (certError) {
       console.error('Error fetching pending certificates table:', JSON.stringify(certError, null, 2))
-      throw new Error('대기 중인 자격증 조회에 실패했습니다.')
+      throw new Error(`대기 중인 자격증 조회에 실패했습니다. (${certError.message})`)
     }
 
     if (!certificates || certificates.length === 0) {
@@ -585,7 +621,7 @@ export async function getPendingCertificates() {
     return result
   } catch (error) {
     console.error('Error in getPendingCertificates:', error)
-    throw new Error('대기 중인 자격증 조회 중 오류가 발생했습니다.')
+    throw new Error(`대기 중인 자격증 조회 중 오류가 발생했습니다. (${(error as Error).message})`)
   }
 }
 
@@ -655,8 +691,8 @@ export async function updateCertificate(
       .eq('id', certificateId)
 
     if (updateError) {
-      console.error('Error updating certificate:', JSON.stringify(updateError))
-      return { success: false, message: '자격증 정보 수정에 실패했습니다.' }
+      console.error('Error updating certificate:', updateError)
+      return { success: false, message: `정보 변경에 실패했습니다. (${updateError.message})` }
     }
 
     revalidatePath('/mypage')
@@ -668,7 +704,7 @@ export async function updateCertificate(
     console.error('Error in updateCertificate:', error)
     return {
       success: false,
-      message: '자격증 정보 수정 중 오류가 발생했습니다.',
+      message: `자격증 정보 변경 중 오류가 발생했습니다. (${(error as Error).message})`,
     }
   }
 }

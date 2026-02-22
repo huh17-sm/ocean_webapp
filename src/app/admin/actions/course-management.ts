@@ -9,6 +9,7 @@
  * - 학생 상세 정보(진도 + 스킬 + 자격증) 한 번에 조회
  */
 
+import { revalidatePath } from 'next/cache'
 import { getSupabaseAdmin } from '@/utils/supabase/admin'
 import { createClient } from '@/utils/supabase/server'
 
@@ -63,7 +64,6 @@ export async function getEnrolledStudents(): Promise<StudentEnrollmentSummary[]>
   const supabaseAdmin = getSupabaseAdmin()
 
   try {
-    // 1) 교육 과정 학생 조회 (pending + in_progress + completed)
     const { data: progressList, error: progressError } = await supabaseAdmin
       .from('course_progress')
       .select(`
@@ -74,10 +74,12 @@ export async function getEnrolledStudents(): Promise<StudentEnrollmentSummary[]>
         theory_completed,
         pool_sessions_completed,
         started_at,
+        created_at,
         notes
       `)
-      .in('status', ['pending', 'in_progress', 'completed'])
-      .order('created_at', { ascending: true })
+      // deleted(휴지통) 상태의 항목도 포함하여 가져옴
+      .in('status', ['pending', 'in_progress', 'completed', 'dropped', 'deleted'])
+      .order('created_at', { ascending: false })
 
     if (progressError) {
       console.error('Error fetching course progress:', progressError)
@@ -189,7 +191,7 @@ export async function getStudentDetail(userId: string): Promise<StudentDetail | 
 
   try {
     // 병렬로 모든 데이터 조회
-    const [profileRes, progressRes, skillsRes, certsRes] = await Promise.all([
+    const [profileRes, progressRes, coursesRes, skillsRes, certsRes] = await Promise.all([
       // 프로필
       supabaseAdmin
         .from('profiles')
@@ -202,6 +204,10 @@ export async function getStudentDetail(userId: string): Promise<StudentDetail | 
         .select('*')
         .eq('user_id', userId)
         .order('created_at', { ascending: false }),
+      // 과정을 위한 세션 수 매핑 및 요구 스킬 매핑
+      supabaseAdmin
+        .from('courses')
+        .select('level, session_count, required_skills'),
       // 스킬 현황
       supabaseAdmin
         .from('skill_completions')
@@ -222,9 +228,26 @@ export async function getStudentDetail(userId: string): Promise<StudentDetail | 
       return null
     }
 
+    // 과정 정보에서 세션 수 및 필수 스킬 맵 구성
+    let courseSessionMap: Record<string, number> = {}
+    let courseSkillsMap: Record<string, any[]> = {}
+    if (coursesRes.data) {
+      coursesRes.data.forEach((current) => {
+        courseSessionMap[current.level] = current.session_count || 3
+        courseSkillsMap[current.level] = current.required_skills || []
+      })
+    }
+
+    // courseProgress 에 매핑
+    const enrichedProgress = (progressRes.data || []).map((p: any) => ({
+      ...p,
+      session_count: courseSessionMap[p.course_level] || 3,
+      required_skills: courseSkillsMap[p.course_level] || []
+    }))
+
     return {
       profile: profileRes.data,
-      courseProgress: progressRes.data || [],
+      courseProgress: enrichedProgress,
       skills: skillsRes.data || [],
       certificates: certsRes.data || [],
     }
@@ -313,4 +336,120 @@ export async function getAllStudents() {
   }
 
   return data || []
+}
+
+// ============================================
+// 6. 교육 과정 삭제 관리 (Soft / Hard Delete)
+// ============================================
+
+/**
+ * 과정을 휴지통으로 이동 (Soft Delete)
+ */
+export async function moveToTrash(progressId: number) {
+  const supabaseAdmin = getSupabaseAdmin()
+
+  const { error } = await supabaseAdmin
+    .from('course_progress')
+    .update({ status: 'deleted' })
+    .eq('id', progressId)
+
+  if (error) {
+    console.error('Error moving progress to trash:', error)
+    return { success: false, error: error.message }
+  }
+
+  revalidatePath('/admin/course-management')
+  return { success: true }
+}
+
+/**
+ * 휴지통에서 과정 복원 (Restore)
+ */
+export async function restoreFromTrash(progressId: number) {
+  const supabaseAdmin = getSupabaseAdmin()
+
+  const { error } = await supabaseAdmin
+    .from('course_progress')
+    .update({ status: 'in_progress' }) // 기본 복원 상태
+    .eq('id', progressId)
+
+  if (error) {
+    console.error('Error restoring progress from trash:', error)
+    return { success: false, error: error.message }
+  }
+
+  revalidatePath('/admin/course-management')
+  return { success: true }
+}
+
+/**
+ * 과정 영구 삭제 (Hard Delete)
+ */
+export async function deletePermanently(progressId: number) {
+  const supabaseAdmin = getSupabaseAdmin()
+
+  const { error } = await supabaseAdmin
+    .from('course_progress')
+    .delete()
+    .eq('id', progressId)
+
+  if (error) {
+    console.error('Error permanently deleting progress:', error)
+    return { success: false, error: error.message }
+  }
+
+  revalidatePath('/admin/course-management')
+  return { success: true }
+}
+
+/**
+ * 휴지통 비우기 및 다중 영구 삭제
+ * @param progressIds 선택된 ID 배열 (없으면 'deleted' 상태인 모든 과정 영구 삭제)
+ */
+export async function emptyTrash(progressIds?: number[]) {
+  const supabaseAdmin = getSupabaseAdmin()
+  let query = supabaseAdmin.from('course_progress').delete()
+
+  if (progressIds && progressIds.length > 0) {
+    query = query.in('id', progressIds)
+  } else {
+    // ids 파라미터가 없으면 전체 삭제 모드 (확실히 방어적으로 status 조건 식별)
+    query = query.eq('status', 'deleted')
+  }
+
+  const { error } = await query
+
+  if (error) {
+    console.error('Error emptying trash:', error)
+    return { success: false, error: error.message }
+  }
+
+  revalidatePath('/admin/course-management')
+  return { success: true }
+}
+
+/**
+ * 휴지통에서 다중 복구
+ * @param progressIds 선택된 ID 배열 (없으면 'deleted' 상태인 모든 과정 복원)
+ */
+export async function restoreAllFromTrash(progressIds?: number[]) {
+  const supabaseAdmin = getSupabaseAdmin()
+  let query = supabaseAdmin.from('course_progress').update({ status: 'in_progress' })
+
+  if (progressIds && progressIds.length > 0) {
+    query = query.in('id', progressIds)
+  } else {
+    // ids 파라미터가 없으면 전체 복원 모드
+    query = query.eq('status', 'deleted')
+  }
+
+  const { error } = await query
+
+  if (error) {
+    console.error('Error restoring all from trash:', error)
+    return { success: false, error: error.message }
+  }
+
+  revalidatePath('/admin/course-management')
+  return { success: true }
 }

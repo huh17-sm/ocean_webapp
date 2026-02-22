@@ -13,6 +13,7 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { TimePicker } from "@/components/ui/time-picker"
 import { cn } from '@/lib/utils'
 import { Pool, PoolSchedule, TimeRange, HolidayRule } from '@/types'
 import { createPool, deletePool, updatePool, togglePoolActive as togglePoolActiveAction } from '@/app/admin/actions/pools'
@@ -258,18 +259,14 @@ export default function PoolManagement({ initialPools }: { initialPools: Pool[] 
                 <div className="space-y-2">
                     {pool.schedule[type].map(range => (
                         <div key={range.id} className="flex items-center gap-1.5 bg-white p-2 rounded border shadow-sm text-sm">
-                            <Input 
-                                type="time" 
-                                className="h-9 min-w-26 px-1 text-center text-sm" 
+                            <TimePicker 
                                 value={range.start}
-                                onChange={(e) => updateTimeRange(pool.id, type, range.id, 'start', e.target.value)}
+                                onChange={(val) => updateTimeRange(pool.id, type, range.id, 'start', val)}
                             />
                             <span className="text-slate-400 shrink-0">~</span>
-                            <Input 
-                                type="time" 
-                                className="h-9 min-w-26 px-1 text-center text-sm"
+                            <TimePicker 
                                 value={range.end}
-                                onChange={(e) => updateTimeRange(pool.id, type, range.id, 'end', e.target.value)}
+                                onChange={(val) => updateTimeRange(pool.id, type, range.id, 'end', val)}
                             />
                             <Button 
                                 variant="ghost" 

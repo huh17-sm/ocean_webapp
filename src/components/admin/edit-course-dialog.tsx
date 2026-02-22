@@ -32,7 +32,8 @@ export function EditCourseDialog({ course, open, onOpenChange, classTypes }: Edi
         credits: course.price?.credits || '',
         classTypeId: course.price?.class_type_id || '',
         sessionCount: course.session_count || '',
-        features: course.features || []
+        features: course.features || [],
+        requiredSkills: course.required_skills || []
     }
 
     const handleSubmit = async (formData: FormData) => {

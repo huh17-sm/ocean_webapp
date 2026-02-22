@@ -12,6 +12,7 @@
 
 import { useState, useEffect } from 'react'
 import { createClient } from '@/utils/supabase/client'
+import { CheckCircle2, XCircle, Receipt, Glasses, Loader2 } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
@@ -242,7 +243,7 @@ export default function CreditSystemTestPage() {
   // 렌더링
   // -----------------------
 
-  if (loading) return <div className="p-10 text-center">🔄 시스템 초기화 중...</div>
+  if (loading) return <div className="p-10 text-center"><Loader2 className="w-4 h-4 animate-spin inline-block mr-2" /> 시스템 초기화 중...</div>
   
   if (!user) {
     return (
@@ -260,7 +261,7 @@ export default function CreditSystemTestPage() {
       <div className="flex flex-col md:flex-row justify-between items-center bg-white p-6 rounded-xl border shadow-sm">
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-2">
-            🥽 크레딧 & 자격증 통합 테스트
+            <Glasses className="w-6 h-6 text-blue-500" /> 크레딧 & 자격증 통합 테스트
             {isAdmin ? <Badge>관리자 권한</Badge> : <Badge variant="secondary">일반 유저</Badge>}
           </h1>
           <p className="text-gray-500 text-sm mt-1">로그인 계정: {user.email}</p>
@@ -275,7 +276,7 @@ export default function CreditSystemTestPage() {
 
       {message && (
         <Alert variant={message.type === 'error' ? 'destructive' : 'default'} className={message.type === 'success' ? 'bg-green-50 border-green-200 text-green-800' : ''}>
-          <AlertTitle>{message.type === 'success' ? '✅ 성공' : '❌ 오류'}</AlertTitle>
+          <AlertTitle className="flex items-center gap-2">{message.type === 'success' ? <><CheckCircle2 className="w-4 h-4 text-green-600" /> 성공</> : <><XCircle className="w-4 h-4 text-red-600" /> 오류</>}</AlertTitle>
           <AlertDescription>{message.text}</AlertDescription>
         </Alert>
       )}
@@ -449,7 +450,7 @@ export default function CreditSystemTestPage() {
       {/* 4. 영수증 (트랜잭션) */}
       <Card className="mt-8">
         <CardHeader className="pb-3 border-b">
-          <CardTitle className="text-lg">🧾 실시간 거래 영수증</CardTitle>
+          <CardTitle className="text-lg flex items-center gap-2"><Receipt className="w-5 h-5 text-slate-600" /> 실시간 거래 영수증</CardTitle>
         </CardHeader>
         <CardContent className="p-0">
           <div className="max-h-[300px] overflow-y-auto">

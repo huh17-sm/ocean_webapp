@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
-import { Award, ChevronDown, ChevronUp, Check, X, Calendar } from 'lucide-react'
+import { Award, ChevronDown, ChevronUp, Check, X, Calendar, AlertTriangle } from 'lucide-react'
 import { approveCertificate, rejectCertificate } from '@/app/admin/actions/certificates-v2'
 import { useRouter } from 'next/navigation'
 import { useConfirm } from '@/components/ui/confirm-dialog'
@@ -105,7 +105,7 @@ export function QuickCertActions({ certificates, totalPendingCount }: QuickCertA
                         </div>
                     </div>
                     <p className="text-red-600 font-medium mt-2">
-                        ⚠️ 거부된 신청은 취소 처리됩니다.
+                        <span className="flex items-center gap-1"><AlertTriangle className="w-4 h-4" /> 거부된 신청은 취소 처리됩니다.</span>
                     </p>
                 </div>
             ),

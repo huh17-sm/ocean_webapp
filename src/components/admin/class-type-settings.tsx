@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/badge'
 import { updateClassTypeSetting, createClassTypeSetting } from '@/app/admin/settings/actions'
 import { toast } from 'sonner'
 import { useRouter } from 'next/navigation'
-import { Pencil, Plus, Save, X } from 'lucide-react'
+import { Pencil, Plus, Save, X, Lightbulb } from 'lucide-react'
 import { ClassTypeSetting } from '@/lib/constants'
 
 interface ClassTypeSettingsProps {
@@ -234,7 +234,7 @@ export function ClassTypeSettings({ initialSettings }: ClassTypeSettingsProps) {
 
                 <div className="mt-6 p-4 bg-amber-50 border border-amber-200 rounded-lg">
                     <p className="text-sm text-amber-800">
-                        <strong>💡 참고:</strong> 타입 코드는 영문 소문자로 입력하며, 한 번 생성하면 수정할 수 없습니다. 
+                        <strong className="flex items-center gap-1"><Lightbulb className="w-4 h-4 text-blue-500" /> 참고:</strong> 타입 코드는 영문 소문자로 입력하며, 한 번 생성하면 수정할 수 없습니다. 
                         표시 이름과 크레딧 소모량은 언제든 변경 가능합니다.
                     </p>
                 </div>

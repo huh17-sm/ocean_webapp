@@ -6,7 +6,7 @@
  * 학생의 자격증 관련 작업을 처리:
  * - 자격증 신청 현황 보기
  * - 신청 승인/거부
- * - 자격증 번호 부여 (발급)
+ * - 자격증 레벨 부여 (발급)
  * - 자격증 직접 발급
  * - 발급된 자격증 수정/삭제
  */
@@ -140,10 +140,10 @@ export function TabCert({
     })
   }
 
-  /** 발급 (승인된 자격증에 번호 부여) */
+  /** 발급 (승인된 자격증에 레벨 부여) */
   const handleIssue = () => {
     if (!issueCertId || !issueCertNumber.trim()) {
-      toast.error('자격증 번호를 입력해주세요.')
+      toast.error('자격증 레벨을 입력해주세요.')
       return
     }
 
@@ -173,7 +173,7 @@ export function TabCert({
   /** 직접 발급 (신청 절차 없이) */
   const handleDirectIssue = () => {
     if (!certNumber.trim()) {
-      toast.error('자격증 번호를 입력해주세요.')
+      toast.error('자격증 레벨을 입력해주세요.')
       return
     }
 
@@ -343,9 +343,9 @@ export function TabCert({
             </div>
 
             <div className="space-y-2">
-              <Label>자격증 번호</Label>
+              <Label>자격증 레벨</Label>
               <Input
-                placeholder="예: AIDA-2024-001"
+                placeholder="예: 아이다2"
                 value={certNumber}
                 onChange={(e) => setCertNumber(e.target.value)}
               />
@@ -385,20 +385,20 @@ export function TabCert({
         </DialogContent>
       </Dialog>
 
-      {/* ==== 발급 다이얼로그 (번호 부여) ==== */}
+      {/* ==== 발급 다이얼로그 (자격증 레벨 부여) ==== */}
       <Dialog open={issueDialogOpen} onOpenChange={setIssueDialogOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>자격증 번호 부여</DialogTitle>
+            <DialogTitle>자격증 레벨 부여</DialogTitle>
             <DialogDescription>
-              승인된 자격증에 번호를 부여하여 발급합니다.
+              승인된 자격증에 레벨을 부여하여 발급합니다.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label>자격증 번호</Label>
+              <Label>자격증 레벨</Label>
               <Input
-                placeholder="예: AIDA-2024-001"
+                placeholder="예: 아이다2"
                 value={issueCertNumber}
                 onChange={(e) => setIssueCertNumber(e.target.value)}
               />
@@ -479,14 +479,14 @@ export function TabCert({
           <DialogHeader>
             <DialogTitle>자격증 정보 수정</DialogTitle>
             <DialogDescription>
-              자격증 번호와 메모를 수정합니다.
+              자격증 레벨과 메모를 수정합니다.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label>자격증 번호</Label>
+              <Label>자격증 레벨</Label>
               <Input
-                placeholder="예: AIDA-2024-001"
+                placeholder="예: 아이다2"
                 value={editCertNumber}
                 onChange={(e) => setEditCertNumber(e.target.value)}
               />
@@ -700,7 +700,7 @@ function CertificateCard({
             className="w-full gap-1"
           >
             <Award className="h-3.5 w-3.5" />
-            자격증 번호 부여
+            자격증 레벨 부여
           </Button>
         )}
       </CardContent>

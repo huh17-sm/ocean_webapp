@@ -18,7 +18,7 @@ import {
 } from '@/components/ui/select'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
-import { AlertCircle, Loader2 } from 'lucide-react'
+import { AlertCircle, Loader2, Sparkles } from 'lucide-react'
 import { assignCourseToUser } from '@/app/admin/actions/course-enrollment'
 import { toast } from 'sonner'
 
@@ -111,7 +111,7 @@ export function AssignCourseDialog({
               {creditAmount > 0 && (
                 <div className="bg-blue-50 border border-blue-200 rounded p-2">
                   <p className="text-xs font-medium text-blue-900">
-                    ✨ 자동으로 {creditAmount}크레딧 지급됩니다
+                    <p className="flex items-center gap-1 mt-2 text-sm text-green-600"><Sparkles className="w-4 h-4" /> 자동으로 {creditAmount}크레딧 지급됩니다</p>
                   </p>
                 </div>
               )}

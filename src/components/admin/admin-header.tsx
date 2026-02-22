@@ -11,25 +11,11 @@ export function AdminHeader() {
 
   return (
     <header className="sticky top-0 z-40 w-full border-b bg-white shadow-sm">
-      <div className="flex h-16 items-center px-4 md:px-6">
-        {/* Mobile: Hamburger + Title */}
-        {isMobile && (
-          <div className="flex items-center gap-3 flex-1">
-            <SidebarTrigger />
-            <h1 className="text-lg font-bold text-slate-900">관리자</h1>
-          </div>
-        )}
-
-        {/* Desktop: Logo + Branding */}
-        {!isMobile && (
-          <div className="flex items-center gap-6 flex-1">
-            <Link href="/admin" className="flex items-center gap-2">
-              <span className="text-xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">
-                🌊 Ocean Admin
-              </span>
-            </Link>
-          </div>
-        )}
+      <div className="flex h-16 items-center px-4 md:px-6 justify-between">
+        <div className="flex items-center gap-3">
+          <SidebarTrigger />
+          {isMobile && <h1 className="text-lg font-bold text-slate-900">관리자</h1>}
+        </div>
 
         {/* Actions */}
         <div className="flex items-center gap-2">

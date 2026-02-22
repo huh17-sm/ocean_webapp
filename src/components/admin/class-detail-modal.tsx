@@ -26,15 +26,17 @@ import {
 import {
     getClassStudents,
     updateClassMediaLink,
-    saveDebriefing,
+    updateClassCompletion,
     addStudentToClass,
     removeStudentFromClass,
     searchUsers,
     completeReservation,
+    cancelReservationCompletion,
 } from '@/app/admin/actions'
 import { CLASS_TYPES, DEFAULT_CREDIT_COSTS, CREDIT_UNIT } from '@/lib/constants'
 import { toast } from 'sonner'
 import { useConfirm } from '@/components/ui/confirm-dialog'
+import Link from 'next/link'
 import type { ClassData } from './availability-calendar'
 
 interface Student {
@@ -81,9 +83,8 @@ export function ClassDetailModal({
     const [students, setStudents] = useState<Student[]>([])
     const [loadingStudents, setLoadingStudents] = useState(false)
 
-    // Debriefing
-    const [editingDebriefingId, setEditingDebriefingId] = useState<string | null>(null)
-    const [debriefingText, setDebriefingText] = useState('')
+    // Class Completion
+    const [isCompleted, setIsCompleted] = useState(classData.is_completed || false)
 
     // Add student
     const [showAddStudent, setShowAddStudent] = useState(false)
@@ -98,7 +99,7 @@ export function ClassDetailModal({
         if (open) {
             setMediaLink(classData.media_link || '')
             setMediaLinkSaved(false)
-            setEditingDebriefingId(null)
+            setIsCompleted(classData.is_completed || false)
             setShowAddStudent(false)
             setSearchQuery('')
             setSearchResults([])
@@ -138,21 +139,17 @@ export function ClassDetailModal({
         })
     }
 
-    // --- Debriefing ---
-    function handleStartDebriefing(student: Student) {
-        setEditingDebriefingId(student.id)
-        setDebriefingText(student.debriefing || '')
-    }
-
-    async function handleSaveDebriefing(reservationId: string) {
+    // --- Class Completion ---
+    async function handleToggleCompletion() {
         startTransition(async () => {
-            const result = await saveDebriefing(reservationId, debriefingText)
+            const newValue = !isCompleted
+            const result = await updateClassCompletion(classData.id, newValue)
             if (result.success) {
-                toast.success('디브리핑이 저장되었습니다.')
-                setEditingDebriefingId(null)
-                fetchStudents()
+                setIsCompleted(newValue)
+                toast.success(newValue ? '수업이 완료 처리되었습니다.' : '수업 완료가 취소되었습니다.')
+                onRefresh?.()
             } else {
-                toast.error(result.error || '저장 실패')
+                toast.error(result.error || '상태 변경 실패')
             }
         })
     }
@@ -254,20 +251,64 @@ export function ClassDetailModal({
         })
     }
 
+    // --- Cancel Attendance ---
+    async function handleCancelAttendance(student: Student) {
+        if (student.status !== 'attended') {
+            toast.info('출석 완료 처리된 수강생이 아닙니다.')
+            return
+        }
+
+        const studentName = student.profiles?.name || student.profiles?.email || '수강생'
+
+        const ok = await confirm({
+            title: '출석 완료 취소',
+            description: `${studentName}님의 출석 완료 처리를 취소하시겠습니까?`,
+            confirmText: '취소하기',
+            cancelText: '닫기'
+        })
+        if (!ok) return
+
+        startTransition(async () => {
+            const result = await cancelReservationCompletion(student.id)
+            if (result.success) {
+                toast.success(`${studentName} 출석 취소됨`)
+                fetchStudents()
+                onRefresh?.()
+            } else {
+                toast.error(result.error || '출석 취소 실패')
+            }
+        })
+    }
+
     const typeName = CLASS_TYPES[classData.type as keyof typeof CLASS_TYPES] || classData.type
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
-                    <DialogTitle className="flex items-center gap-2">
-                        <Badge variant="outline" className="text-xs">
-                            {typeName}
-                        </Badge>
-                        <span>
-                            {classData.title || typeName} - {classData.date} {classData.time?.slice(0, 5)}
-                        </span>
-                    </DialogTitle>
+                    <div className="flex items-center justify-between mt-4">
+                        <DialogTitle className="flex items-center gap-2">
+                            <Badge variant="outline" className="text-xs">
+                                {typeName}
+                            </Badge>
+                            <span>
+                                {classData.title || typeName} - {classData.date} {classData.time?.slice(0, 5)}
+                            </span>
+                        </DialogTitle>
+                        <div className="flex items-center gap-2 bg-slate-50 px-3 py-1.5 rounded-full border border-slate-200">
+                            <input
+                                type="checkbox"
+                                id="class-completed"
+                                checked={isCompleted}
+                                onChange={handleToggleCompletion}
+                                disabled={isPending}
+                                className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-600"
+                            />
+                            <Label htmlFor="class-completed" className="text-sm font-semibold cursor-pointer">
+                                수업 완료
+                            </Label>
+                        </div>
+                    </div>
                 </DialogHeader>
 
                 <div className="space-y-6 py-2">
@@ -479,31 +520,41 @@ export function ClassDetailModal({
                                                     </Badge>
                                                 )}
                                                 {student.status === 'attended' ? (
-                                                    <Badge variant="default" className="text-[10px] bg-green-500 hover:bg-green-600">
-                                                        <CheckCircle className="w-3 h-3 mr-1" />
-                                                        출석 완료
-                                                    </Badge>
-                                                ) : (
                                                     <Button
                                                         size="sm"
                                                         variant="ghost"
                                                         className="h-7 px-2 text-xs text-green-600 hover:text-green-800 hover:bg-green-50"
-                                                        onClick={() => handleCompleteAttendance(student)}
+                                                        onClick={() => handleCancelAttendance(student)}
                                                         disabled={isPending}
                                                     >
                                                         <CheckCircle className="w-3.5 h-3.5 mr-1" />
                                                         출석 완료
                                                     </Button>
+                                                ) : (
+                                                    <Button
+                                                        size="sm"
+                                                        variant="ghost"
+                                                        className="h-7 px-2 text-xs text-slate-500 hover:text-slate-800 hover:bg-slate-50 border border-slate-200"
+                                                        onClick={() => handleCompleteAttendance(student)}
+                                                        disabled={isPending}
+                                                    >
+                                                        <Check className="w-3.5 h-3.5 mr-1" />
+                                                        출석 처리
+                                                    </Button>
                                                 )}
-                                                <Button
-                                                    size="sm"
-                                                    variant="ghost"
-                                                    className="h-7 px-2 text-xs text-blue-600 hover:text-blue-800 hover:bg-blue-50"
-                                                    onClick={() => handleStartDebriefing(student)}
-                                                >
-                                                    <MessageSquare className="w-3.5 h-3.5 mr-1" />
-                                                    {student.debriefing ? '수정' : '디브리핑'}
-                                                </Button>
+                                                {student.status === 'attended' || isCompleted ? (
+                                                    <Button
+                                                        size="sm"
+                                                        variant="ghost"
+                                                        className="h-7 px-2 text-xs text-blue-600 hover:text-blue-800 hover:bg-blue-50"
+                                                        asChild
+                                                    >
+                                                        <Link href={`/admin/debriefings?class_id=${classData.id}`}>
+                                                            <MessageSquare className="w-3.5 h-3.5 mr-1" />
+                                                            디브리핑 작성
+                                                        </Link>
+                                                    </Button>
+                                                ) : null}
                                                 <Button
                                                     size="sm"
                                                     variant="ghost"
@@ -515,53 +566,6 @@ export function ClassDetailModal({
                                                 </Button>
                                             </div>
                                         </div>
-
-                                        {/* Existing Debriefing Display */}
-                                        {student.debriefing && editingDebriefingId !== student.id && (
-                                            <div className="ml-7 p-2 bg-slate-50 rounded-lg border border-slate-100">
-                                                <p className="text-xs text-slate-600 whitespace-pre-wrap">{student.debriefing}</p>
-                                                {student.debriefing_at && (
-                                                    <p className="text-[10px] text-slate-400 mt-1">
-                                                        {new Date(student.debriefing_at).toLocaleString('ko-KR')}
-                                                    </p>
-                                                )}
-                                            </div>
-                                        )}
-
-                                        {/* Debriefing Editor */}
-                                        {editingDebriefingId === student.id && (
-                                            <div className="ml-7 space-y-2 animate-in fade-in zoom-in-95 duration-200">
-                                                <textarea
-                                                    value={debriefingText}
-                                                    onChange={(e) => setDebriefingText(e.target.value)}
-                                                    placeholder="디브리핑 내용을 입력하세요..."
-                                                    className="w-full min-h-[80px] p-2 text-sm border border-slate-200 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-400"
-                                                />
-                                                <div className="flex gap-2 justify-end">
-                                                    <Button
-                                                        size="sm"
-                                                        variant="ghost"
-                                                        className="h-7 text-xs"
-                                                        onClick={() => setEditingDebriefingId(null)}
-                                                    >
-                                                        취소
-                                                    </Button>
-                                                    <Button
-                                                        size="sm"
-                                                        className="h-7 text-xs"
-                                                        onClick={() => handleSaveDebriefing(student.id)}
-                                                        disabled={isPending}
-                                                    >
-                                                        {isPending ? (
-                                                            <Loader2 className="w-3 h-3 animate-spin mr-1" />
-                                                        ) : (
-                                                            <Save className="w-3 h-3 mr-1" />
-                                                        )}
-                                                        저장
-                                                    </Button>
-                                                </div>
-                                            </div>
-                                        )}
                                     </div>
                                 ))}
                             </div>

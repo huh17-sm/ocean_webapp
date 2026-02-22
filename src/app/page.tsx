@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Check, MessageCircle, Instagram, BookOpen, Waves, Dumbbell } from "lucide-react";
+import { Check, MessageCircle, Instagram, BookOpen, Waves, Dumbbell, CreditCard } from "lucide-react";
 import { createClient } from "@/utils/supabase/server";
 import { CREDIT_UNIT } from "@/lib/constants";
 
@@ -64,7 +64,7 @@ export default async function Home() {
         </div>
         
         <div className="container mx-auto px-4 flex flex-col items-center text-center gap-6 relative z-10">
-          <Badge variant="secondary" className="px-4 py-1.5 text-sm animate-fade-up">🌊 Ocean Freediving</Badge>
+          <Badge variant="secondary" className="px-4 py-1.5 text-sm animate-fade-up flex items-center gap-1"><Waves className="w-4 h-4" /> Ocean Freediving</Badge>
           <h1 className="text-4xl font-bold tracking-tight text-white sm:text-6xl max-w-2xl animate-fade-up" style={{animationDelay: '0.1s'}}>
             가장 안전하고 즐거운 <br className="hidden sm:inline" />
             <span className="text-accent drop-shadow-lg">프리다이빙</span>의 시작
@@ -182,7 +182,7 @@ export default async function Home() {
         </div>
 
         <div className="mt-12 text-center p-6 bg-slate-100 rounded-2xl">
-          <h3 className="text-lg font-semibold text-slate-800 mb-2">💳 결제 및 크레딧 충전 안내</h3>
+          <h3 className="text-lg font-semibold text-slate-800 mb-2 flex items-center justify-center gap-2"><CreditCard className="w-5 h-5" /> 결제 및 크레딧 충전 안내</h3>
           <p className="text-slate-600 mb-4">
             현재 시스템에서는 <strong>무통장 입금</strong> 후 관리자가 크레딧을 충전해드리고 있습니다. <br />
             입금 후 아래 문의 채널로 연락 주시면 빠르게 처리해드립니다.

@@ -41,7 +41,7 @@ export default async function CertificatesPage() {
     <CertificatesView
       certificates={certificates || []}
       courseProgress={courseProgress || []}
-      userCredits={profile?.general_credits ?? profile?.credits ?? 0}
+      userCredits={Math.max(profile?.general_credits || 0, profile?.credits || 0)}
     />
   )
 }

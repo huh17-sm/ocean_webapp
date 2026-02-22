@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
-import { Clock, ChevronDown, ChevronUp, Check, X, Users, Calendar } from 'lucide-react'
+import { Clock, ChevronDown, ChevronUp, Check, X, Users, Calendar, AlertTriangle } from 'lucide-react'
 import { updateClassRequestStatus } from '@/app/classes/actions'
 import { useRouter } from 'next/navigation'
 import { useConfirm } from '@/components/ui/confirm-dialog'
@@ -127,7 +127,7 @@ export function QuickRequestApproval({ requests, totalPendingCount }: QuickReque
                         </div>
                     </div>
                     <p className="text-red-600 font-medium mt-2">
-                        ⚠️ 거절된 요청은 취소 처리됩니다.
+                        <span className="flex items-center gap-1"><AlertTriangle className="w-4 h-4" /> 거절된 요청은 취소 처리됩니다.</span>
                     </p>
                 </div>
             ),

@@ -8,7 +8,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/components/ui/collapsible'
-import { ChevronDown, Calendar, MapPin } from 'lucide-react'
+import { ChevronDown, Calendar, MapPin, Target, Sparkles, TrendingUp, GraduationCap } from 'lucide-react'
 import { useState } from 'react'
 
 interface DebriefingsCardProps {
@@ -89,8 +89,8 @@ function DebriefingItem({ debriefing }: { debriefing: MyDebriefing }) {
           <CardContent className="space-y-4 pt-0">
             {debriefing.performance && (
               <div>
-                <h4 className="font-semibold text-sm text-slate-700 mb-2">
-                  🎯 수행 평가
+                <h4 className="font-semibold text-sm text-slate-700 mb-2 flex items-center gap-1">
+                  <Target className="w-4 h-4 text-blue-500" /> 수행 평가
                 </h4>
                 <p className="text-sm text-slate-600 bg-slate-50 p-3 rounded-md whitespace-pre-wrap">
                   {debriefing.performance}
@@ -100,8 +100,8 @@ function DebriefingItem({ debriefing }: { debriefing: MyDebriefing }) {
 
             {debriefing.strengths && (
               <div>
-                <h4 className="font-semibold text-sm text-slate-700 mb-2">
-                  ✨ 잘한 점
+                <h4 className="font-semibold text-sm text-slate-700 mb-2 flex items-center gap-1">
+                  <Sparkles className="w-4 h-4 text-green-500" /> 잘한 점
                 </h4>
                 <p className="text-sm text-slate-600 bg-green-50 p-3 rounded-md whitespace-pre-wrap">
                   {debriefing.strengths}
@@ -111,8 +111,8 @@ function DebriefingItem({ debriefing }: { debriefing: MyDebriefing }) {
 
             {debriefing.improvement && (
               <div>
-                <h4 className="font-semibold text-sm text-slate-700 mb-2">
-                  📈 개선 포인트
+                <h4 className="font-semibold text-sm text-slate-700 mb-2 flex items-center gap-1">
+                  <TrendingUp className="w-4 h-4 text-orange-500" /> 개선 포인트
                 </h4>
                 <p className="text-sm text-slate-600 bg-blue-50 p-3 rounded-md whitespace-pre-wrap">
                   {debriefing.improvement}
@@ -122,8 +122,8 @@ function DebriefingItem({ debriefing }: { debriefing: MyDebriefing }) {
 
             {debriefing.next_goal && (
               <div>
-                <h4 className="font-semibold text-sm text-slate-700 mb-2">
-                  🎓 다음 목표
+                <h4 className="font-semibold text-sm text-slate-700 mb-2 flex items-center gap-1">
+                  <GraduationCap className="w-4 h-4 text-purple-500" /> 다음 목표
                 </h4>
                 <p className="text-sm text-slate-600 bg-yellow-50 p-3 rounded-md whitespace-pre-wrap">
                   {debriefing.next_goal}

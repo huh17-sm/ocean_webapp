@@ -20,6 +20,7 @@ import type {
   RechargeRequest,
 } from '@/types/credit'
 import { CURRICULUM_PACKAGES } from '@/lib/credit-constants'
+import { requireAdmin } from '@/app/admin/utils/auth'
 
 // ============================================
 // 1. 크레딧 잔액 조회
@@ -33,7 +34,7 @@ export async function getUserCredits(userId: string): Promise<number> {
 
   const { data, error } = await supabase
     .from('profiles')
-    .select('general_credits')
+    .select('general_credits, credits')
     .eq('id', userId)
     .single()
 
@@ -49,7 +50,7 @@ export async function getUserCredits(userId: string): Promise<number> {
     return 0
   }
 
-  return data?.general_credits || 0
+  return Math.max(data?.general_credits || 0, data?.credits || 0)
 }
 
 // ============================================
@@ -205,7 +206,8 @@ export async function refundCreditsForCancellation(
   userId: string,
   creditAmount: number,
   reservationId: string,
-  classType: string
+  classType: string,
+  memoOverride?: string
 ): Promise<CreditOperationResult> {
   const supabase = await createClient()
 
@@ -224,7 +226,7 @@ export async function refundCreditsForCancellation(
       p_reason: `refund_cancellation_${classType}`,
       p_related_entity_id: reservationId,
       p_related_entity_type: 'reservation',
-      p_memo: `${classType} 수업 취소 환불 (${creditAmount}C 반환)`,
+      p_memo: memoOverride || `${classType} 수업 취소 환불 (${creditAmount}C 반환)`,
     })
 
     if (error) {
@@ -329,33 +331,9 @@ export async function adjustCreditsManually(
   reason: string,
   memo?: string
 ): Promise<CreditOperationResult> {
-  const supabase = await createClient()
-
-  // Validate userId format
-  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-  if (!uuidRegex.test(userId)) {
-      console.error(`Invalid User ID format: ${userId}`);
-      return { success: false, error: 'invalid_userid', message: '유효하지 않은 사용자 ID입니다.' };
-  }
-
   try {
     // 관리자 권한 확인
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
-    if (!user) {
-      return { success: false, error: 'unauthorized', message: '로그인이 필요합니다.' }
-    }
-
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', user.id)
-      .single()
-
-    if (profile?.role !== 'admin') {
-      return { success: false, error: 'forbidden', message: '관리자 권한이 필요합니다.' }
-    }
+    const { supabase } = await requireAdmin()
 
     // 크레딧 조정 (v2에서는 일반 크레딧 전용 함수가 있거나, 기본 함수가 general_credits를 처리해야 함)
     // NOTE: 만약 RPC 함수가 여전히 v1 기준(credits 컬럼 사용)이라면 에러가 날 수 있습니다.
@@ -397,30 +375,13 @@ export async function adjustCreditsManually(
  * 충전 요청 승인 (패키지 구매 완료 처리 및 크레딧 지급)
  */
 export async function approveRechargeRequest(requestId: string): Promise<{ success: boolean; error?: string }> {
-  const supabase = await createClient()
-
-  console.log('[approveRechargeRequest] Called with requestId:', requestId)
-
-
-  // Validate requestId format
-  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-  if (!uuidRegex.test(requestId)) {
-      console.error(`Invalid Request ID format: ${requestId}`);
-      return { success: false, error: '유효하지 않은 요청 ID입니다.' };
-  }
-
   // 관리자 권한 확인
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return { success: false, error: '로그인이 필요합니다.' }
-
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('role')
-    .eq('id', user.id)
-    .single()
-
-  if (profile?.role !== 'admin') {
-    return { success: false, error: '관리자 권한이 필요합니다.' }
+  let supabase
+  try {
+    const result = await requireAdmin()
+    supabase = result.supabase
+  } catch (error: any) {
+    return { success: false, error: error.message }
   }
 
   // 1. 요청 정보 조회
@@ -483,27 +444,12 @@ export async function approveRechargeRequest(requestId: string): Promise<{ succe
  * 충전 요청 거절 (패키지 구매 취소 처리)
  */
 export async function rejectRechargeRequest(requestId: string, reason: string): Promise<{ success: boolean; error?: string }> {
-  const supabase = await createClient()
-
-  // Validate requestId format
-  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-  if (!uuidRegex.test(requestId)) {
-      console.error(`Invalid Request ID format: ${requestId}`);
-      return { success: false, error: '유효하지 않은 요청 ID입니다.' };
-  }
-
-  // 관리자 권한 확인
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return { success: false, error: '로그인이 필요합니다.' }
-
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('role')
-    .eq('id', user.id)
-    .single()
-
-  if (profile?.role !== 'admin') {
-    return { success: false, error: '관리자 권한이 필요합니다.' }
+  let supabase
+  try {
+      const result = await requireAdmin()
+      supabase = result.supabase
+  } catch (error: any) {
+      return { success: false, error: error.message }
   }
 
   // 1. 상태 업데이트
@@ -529,19 +475,13 @@ export async function rejectRechargeRequest(requestId: string, reason: string): 
 // ============================================
 
 export async function getPendingRechargeRequests(): Promise<RechargeRequest[]> {
-  const supabase = await createClient()
-
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return []
-
-  // 관리자 권한 체크는 RLS나 미들웨어에서 처리되겠지만, 안전을 위해
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('role')
-    .eq('id', user.id)
-    .single()
-
-  if (profile?.role !== 'admin') return []
+  let supabase
+  try {
+    const result = await requireAdmin()
+    supabase = result.supabase
+  } catch {
+    return []
+  }
 
   const { data, error } = await supabase
     .from('package_purchases')
@@ -556,8 +496,8 @@ export async function getPendingRechargeRequests(): Promise<RechargeRequest[]> {
 
   // Debugging: Log IDs of pending requests
   if (data && data.length > 0) {
-      console.log('[getPendingRechargeRequests] Found pending requests:', data.map(r => ({ id: r.id, user_id: r.user_id, price: r.price })))
-      const badReq = data.find(r => r.id === '2' || !/^[0-9a-f]{8}-[0-9a-f]{4}/.test(r.id))
+      console.log('[getPendingRechargeRequests] Found pending requests:', data.map((r: any) => ({ id: r.id, user_id: r.user_id, price: r.price })))
+      const badReq = data.find((r: any) => r.id === '2' || !/^[0-9a-f]{8}-[0-9a-f]{4}/.test(r.id))
       if (badReq) {
           console.error('[getPendingRechargeRequests] CRITICAL: Found invalid ID:', badReq)
       }
@@ -574,18 +514,13 @@ export async function getAllCreditTransactions(
   limit: number = 100,
   offset: number = 0
 ): Promise<CreditTransaction[]> {
-  const supabase = await createClient()
-
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return []
-
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('role')
-    .eq('id', user.id)
-    .single()
-
-  if (profile?.role !== 'admin') return []
+  let supabase
+  try {
+    const result = await requireAdmin()
+    supabase = result.supabase
+  } catch {
+    return []
+  }
 
   const { data, error } = await supabase
     .from('credit_transactions')

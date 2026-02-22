@@ -29,11 +29,11 @@ interface SkillManagementTableProps {
 }
 
 const skillTypes = [
-  { value: 'static', label: 'Static (스태틱)', emoji: '🧘' },
-  { value: 'dynamic', label: 'Dynamic (다이나믹)', emoji: '🏊' },
-  { value: 'depth', label: 'Depth (수심)', emoji: '🤿' },
-  { value: 'rescue', label: 'Rescue (구조)', emoji: '🆘' },
-  { value: 'theory', label: 'Theory (이론)', emoji: '📚' },
+  { value: 'theory', label: '이론 교육' },
+  { value: 'static', label: '스태틱 (숨참기)' },
+  { value: 'dynamic', label: '다이나믹 (잠영)' },
+  { value: 'depth', label: '수심 (컨스탄트웨이트)' },
+  { value: 'rescue', label: '레스큐 (구조)' },
 ]
 
 const courseLevels = ['입문', '초급', '중급', '고급']
@@ -207,7 +207,7 @@ export function SkillManagementTable({ students }: SkillManagementTableProps) {
                   <SelectContent>
                     {skillTypes.map((skill) => (
                       <SelectItem key={skill.value} value={skill.value}>
-                        {skill.emoji} {skill.label}
+                        {skill.label}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -282,7 +282,7 @@ export function SkillManagementTable({ students }: SkillManagementTableProps) {
                           {skill.course_level}
                         </Badge>
                         <p className="font-medium text-sm">
-                          {skillInfo?.emoji} {skillInfo?.label}
+                          {skillInfo?.label}
                         </p>
                       </div>
                       {skill.is_completed && skill.completed_at && (

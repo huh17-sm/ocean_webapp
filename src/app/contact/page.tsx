@@ -1,5 +1,6 @@
 import { Metadata } from 'next'
 import { PolicyLayout } from '@/components/layout/policy-layout'
+import { MessageCircle, Mail, Smartphone, Phone } from 'lucide-react'
 
 export const metadata: Metadata = {
   title: '문의하기 - Ocean Freediving',
@@ -10,8 +11,8 @@ export default function ContactPage() {
   return (
     <PolicyLayout title="문의하기">
       <div className="space-y-6">
-        <div className="text-center py-12">
-          <div className="text-6xl mb-4">💬</div>
+        <div className="text-center py-12 flex flex-col items-center">
+          <MessageCircle className="h-16 w-16 text-blue-500 mb-4" />
           <h2 className="text-2xl font-bold text-slate-900 mb-2">문의하기</h2>
           <p className="text-slate-600">
             현재 문의 폼을 준비 중입니다.
@@ -22,19 +23,19 @@ export default function ContactPage() {
 
         <div className="bg-slate-50 border rounded-lg p-6 space-y-4">
           <div>
-            <h3 className="font-semibold text-slate-900 mb-2">📧 이메일</h3>
+            <h3 className="font-semibold text-slate-900 mb-2 flex items-center gap-2"><Mail className="h-5 w-5 text-slate-500" /> 이메일</h3>
             <p className="text-slate-700">contact@oceanfreediving.com</p>
             <p className="text-sm text-slate-500 mt-1">영업일 기준 24시간 내 답변 드립니다.</p>
           </div>
 
           <div>
-            <h3 className="font-semibold text-slate-900 mb-2">📱 카카오톡</h3>
+            <h3 className="font-semibold text-slate-900 mb-2 flex items-center gap-2"><Smartphone className="h-5 w-5 text-slate-500" /> 카카오톡</h3>
             <p className="text-slate-700">@oceanfreediving</p>
             <p className="text-sm text-slate-500 mt-1">평일 10:00 - 18:00 실시간 상담</p>
           </div>
 
           <div>
-            <h3 className="font-semibold text-slate-900 mb-2">📞 전화</h3>
+            <h3 className="font-semibold text-slate-900 mb-2 flex items-center gap-2"><Phone className="h-5 w-5 text-slate-500" /> 전화</h3>
             <p className="text-slate-700">02-1234-5678</p>
             <p className="text-sm text-slate-500 mt-1">평일 10:00 - 18:00 (점심시간 12:00 - 13:00)</p>
           </div>

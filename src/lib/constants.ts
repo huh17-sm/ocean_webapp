@@ -43,3 +43,58 @@ export const CLASS_BG_COLORS = {
 
 // 통합 크레딧 단위 (C, Cr, 회 등 혼용 방지)
 export const CREDIT_UNIT = "C"
+
+// 스킬 정의 데이터
+export const SKILL_DEFINITIONS: Record<
+  string,
+  { type: string; label: string; minSession?: number }[]
+> = {
+  입문: [
+    { type: 'theory', label: '이론 교육' },
+    { type: 'static', label: '스태틱 (숨참기)' },
+    { type: 'dynamic', label: '다이나믹 (잠영)' },
+    { type: 'rescue', label: '레스큐 (구조)' },
+  ],
+  초급: [
+    { type: 'theory', label: '이론 교육' },
+    { type: 'static', label: '스태틱 (숨참기)' },
+    { type: 'dynamic', label: '다이나믹 (잠영)' },
+    { type: 'depth', label: '수심 (컨스탄트웨이트)' },
+    { type: 'rescue', label: '레스큐 (구조)' },
+  ],
+  중급: [
+    { type: 'theory', label: '이론 교육' },
+    { type: 'static', label: '스태틱 (숨참기)' },
+    { type: 'dynamic', label: '다이나믹 (잠영)' },
+    { type: 'depth', label: '수심 (컨스탄트웨이트)' },
+    { type: 'rescue', label: '레스큐 (구조)' },
+  ],
+  고급: [
+    { type: 'theory', label: '이론 교육' },
+    { type: 'static', label: '스태틱 (숨참기)' },
+    { type: 'dynamic', label: '다이나믹 (잠영)' },
+    { type: 'depth', label: '수심 (컨스탄트웨이트)' },
+    { type: 'rescue', label: '레스큐 (구조)' },
+  ],
+}
+
+// 취소 및 환불 정책 상수
+// 나중에 관리자 페이지 등에서 DB로 이관하거나 쉽게 수정할 수 있도록 분리해 둡니다.
+export const REFUND_POLICY = {
+  SAME_DAY: {
+    daysBefore: 0,
+    refundRate: 0, // 당일 0% 환불 (취소 불가)
+    message: "당일 취소는 불가합니다.",
+  },
+  ONE_TO_THREE_DAYS: {
+    daysBeforeStart: 1, // 1일 전부터
+    daysBeforeEnd: 3,   // 3일 전까지
+    refundRate: 0.2, // 80% 차감 (20% 환불)
+    message: "수업 1~3일 전 취소 시 위약금(80%)이 차감되어 20%만 환불됩니다.",
+  },
+  FOUR_OR_MORE_DAYS: {
+    daysBefore: 4,      // 4일 전 이상
+    refundRate: 1.0, // 100% 환불
+    message: "수업 4일 이전 취소 시 100% 전액 환불됩니다.",
+  },
+} as const
