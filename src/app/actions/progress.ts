@@ -274,7 +274,22 @@ export async function getMyDebriefings(): Promise<MyDebriefing[]> {
     return []
   }
 
-  return data || []
+  // 수업 날짜(classes.date) 기준으로 내림차순 재정렬 (최신 수업이 먼저 보이도록)
+  const sorted = (data || []).sort((a, b) => {
+    const dateA = a.reservation?.classes?.date || ''
+    const dateB = b.reservation?.classes?.date || ''
+    return dateB.localeCompare(dateA) // 내림차순: 최신 날짜가 먼저
+  })
+
+  // 빈 디브리핑 필터링: 피드백 내용이 모두 없고 미디어 링크도 없으면 숨김
+  // (미디어 링크가 있으면 피드백이 없어도 앨범 확인용으로 표시)
+  const filtered = sorted.filter((d) => {
+    const hasContent = !!(d.performance || d.strengths || d.improvement || d.next_goal)
+    const hasMedia = !!d.reservation?.classes?.media_link
+    return hasContent || hasMedia
+  })
+
+  return filtered
 }
 
 /**

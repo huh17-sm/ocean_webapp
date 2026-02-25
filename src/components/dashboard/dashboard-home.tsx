@@ -18,7 +18,9 @@ import {
   Bell,
   Flame,
   PartyPopper,
-  Mail
+  Mail,
+  BookOpen,
+  GraduationCap
 } from 'lucide-react'
 import { formatCredits } from '@/lib/credit-constants'
 import { UpcomingClassDialog } from '@/components/dashboard/upcoming-class-dialog'
@@ -171,30 +173,51 @@ export function DashboardHome({
         )}
       </section>
 
-      {/* 4. 내 진도 */}
+      {/* 4. 내 과정 (동적 섹션: 미등록→교육과정 추천, 등록→진도 요약) */}
       <section>
         <div className="flex justify-between items-center mb-3 px-1">
             <h2 className="text-lg font-bold flex items-center gap-2">
-                <TrendingUp className="w-5 h-5 text-slate-700" />
-                내 진도
+                {currentCourse ? (
+                  <><TrendingUp className="w-5 h-5 text-slate-700" /> 내 진도</>
+                ) : (
+                  <><BookOpen className="w-5 h-5 text-slate-700" /> 내 과정</>
+                )}
             </h2>
-            <Link href="/dashboard/progress" className="text-sm text-slate-500 hover:text-blue-600">
-                상세보기
-            </Link>
+            {currentCourse ? (
+              <Link href="/dashboard/progress" className="text-sm text-slate-500 hover:text-blue-600">
+                  상세보기
+              </Link>
+            ) : (
+              <Link href="/dashboard/courses" className="text-sm text-slate-500 hover:text-blue-600">
+                  전체보기
+              </Link>
+            )}
         </div>
 
         {!currentCourse ? (
-             <Card className="border-dashed shadow-sm bg-slate-50/50">
-                <CardContent className="flex flex-col items-center justify-center py-6 text-center">
-                    <p className="text-slate-500 mb-2">진행 중인 교육 과정이 없습니다</p>
+            /* ── 미등록 상태: 교육과정 추천 카드 ── */
+            <Card className="bg-linear-to-br from-emerald-50 to-teal-50 border-emerald-200 shadow-sm">
+                <CardContent className="flex flex-col items-center justify-center py-8 text-center px-6">
+                    <div className="w-14 h-14 bg-emerald-100 rounded-full flex items-center justify-center mb-3">
+                        <GraduationCap className="w-7 h-7 text-emerald-600" />
+                    </div>
+                    <h3 className="font-bold text-slate-800 text-base mb-1">
+                        교육 과정을 선택해보세요!
+                    </h3>
+                    <p className="text-sm text-slate-500 mb-4 leading-relaxed">
+                        아직 등록된 과정이 없습니다.<br />
+                        원하는 교육 과정을 선택하고 시작하세요.
+                    </p>
                     <Link href="/dashboard/courses">
-                        <Button variant="link" className="text-blue-600 p-0 h-auto">
-                            교육 과정 둘러보기 <ArrowRight className="w-4 h-4 ml-1" />
+                        <Button className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-6">
+                            <BookOpen className="w-4 h-4 mr-2" />
+                            교육 과정 보러가기
                         </Button>
                     </Link>
                 </CardContent>
             </Card>
         ) : (
+            /* ── 등록 완료 상태: 진도 요약 카드 ── */
             <Card>
                 <CardContent className="p-5">
                     {(() => {
@@ -216,7 +239,7 @@ export function DashboardHome({
                                     </div>
                                     <div className="text-right">
                                          <span className="text-2xl font-bold text-slate-900">
-                                            {Math.round(completedPercentage)}%
+                                             {Math.round(completedPercentage)}%
                                          </span>
                                     </div>
                                 </div>

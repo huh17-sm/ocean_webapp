@@ -175,7 +175,7 @@ export function ReservationsView({ reservations }: ReservationsViewProps) {
 
                       {reservation.status === 'attended' && (
                         <>
-                          <Link href={`/dashboard/progress`} className="flex-1">
+                          <Link href={`/dashboard/debriefings`} className="flex-1">
                             <Button variant="outline" size="sm" className="w-full">
                               디브리핑 보기
                             </Button>

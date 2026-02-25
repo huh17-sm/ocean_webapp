@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useTransition } from 'react'
+import Link from 'next/link'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -342,83 +343,24 @@ export function ProgressView({ progressData }: ProgressViewProps) {
             </Card>
           )}
 
-          {/* 최근 디브리핑 */}
+          {/* 디브리핑 페이지로 이동 링크 */}
           {progressData.debriefings.length > 0 && (
-            <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-lg flex items-center gap-2">
-                    <MessageSquareHeart className="w-5 h-5 text-pink-500" />
-                    <span>최근 디브리핑</span>
-                  </CardTitle>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => toggleSection('debriefings')}
-                  >
-                    {expandedSection === 'debriefings' ? (
-                      <ChevronDown className="h-5 w-5" />
-                    ) : (
-                      <ChevronRight className="h-5 w-5" />
-                    )}
-                  </Button>
-                </div>
-              </CardHeader>
-              {expandedSection === 'debriefings' && (
-                <CardContent>
-                  <div className="space-y-4">
-                    {progressData.debriefings.slice(0, 3).map((debriefing) => {
-                      const classInfo = debriefing.reservation?.classes
-
-                      return (
-                        <div
-                          key={debriefing.id}
-                          className="p-4 border border-slate-200 rounded-xl bg-slate-50 shadow-sm space-y-3"
-                        >
-                          <div className="flex justify-between items-start">
-                            <div>
-                              {classInfo && (
-                                <>
-                                  <Badge variant="outline" className="mb-2 bg-white font-bold">
-                                    {classInfo.type === 'pool' ? '풀장 실습' : classInfo.type}
-                                  </Badge>
-                                  <p className="text-xs font-semibold text-slate-500">
-                                    {new Date(classInfo.date).toLocaleDateString('ko-KR')}
-                                  </p>
-                                </>
-                              )}
-                            </div>
-                            {debriefing.instructor && (
-                              <p className="text-[11px] font-bold tracking-tight px-2 py-1 bg-slate-200/50 rounded text-slate-600">
-                                👨‍🏫 강사: {debriefing.instructor.name}
-                              </p>
-                            )}
-                          </div>
-
-                          {debriefing.performance && (
-                            <div className="text-sm bg-white p-2.5 rounded border border-slate-100">
-                              <p className="text-[11px] font-bold tracking-tight text-slate-400 mb-0.5">
-                                [수행 평가]
-                              </p>
-                              <p className="text-slate-700 font-medium leading-relaxed">{debriefing.performance}</p>
-                            </div>
-                          )}
-
-                          {debriefing.next_goal && (
-                            <div className="text-sm bg-blue-50/50 border border-blue-100 p-2.5 rounded">
-                              <p className="text-[11px] font-bold tracking-tight text-blue-600 mb-0.5">
-                                [다음 목표]
-                              </p>
-                              <p className="text-slate-700 font-medium leading-relaxed">{debriefing.next_goal}</p>
-                            </div>
-                          )}
-                        </div>
-                      )
-                    })}
+            <Link href="/dashboard/debriefings" className="block">
+              <Card className="hover:shadow-md transition-all cursor-pointer border-slate-200 hover:border-blue-300 group">
+                <CardContent className="p-4 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center group-hover:bg-blue-100 transition-colors">
+                      <MessageSquareHeart className="w-5 h-5 text-blue-500" />
+                    </div>
+                    <div>
+                      <p className="font-bold text-sm text-slate-800">내 수업 디브리핑</p>
+                      <p className="text-xs text-slate-500">강사님의 피드백 {progressData.debriefings.length}건을 확인하세요</p>
+                    </div>
                   </div>
+                  <ChevronRight className="w-5 h-5 text-slate-300 group-hover:text-blue-500 transition-colors" />
                 </CardContent>
-              )}
-            </Card>
+              </Card>
+            </Link>
           )}
         </TabsContent>
 

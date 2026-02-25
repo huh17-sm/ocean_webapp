@@ -33,5 +33,12 @@ export default async function ReservationsPage() {
     .eq('user_id', user.id)
     .order('created_at', { ascending: false })
 
-  return <ReservationsView reservations={reservations || []} />
+  // 수업 날짜(classes.date) 기준으로 내림차순 재정렬 (최신 수업이 먼저 보이도록)
+  const sorted = (reservations || []).sort((a: any, b: any) => {
+    const dateA = a.classes?.date || ''
+    const dateB = b.classes?.date || ''
+    return dateB.localeCompare(dateA)
+  })
+
+  return <ReservationsView reservations={sorted} />
 }

@@ -75,19 +75,26 @@ export default async function Home() {
             초보자부터 전문가 과정까지, 오션과 함께하세요.
           </p>
 
-          <div className="flex gap-4 mt-4 animate-fade-up" style={{animationDelay: '0.3s'}}>
+          <div className="flex flex-wrap justify-center gap-4 mt-4 animate-fade-up" style={{animationDelay: '0.3s'}}>
             {user ? (
-              <Link href="/dashboard">
-                <Button variant="secondary" size="lg" className="rounded-full px-8">내 대시보드 (교육현황)</Button>
-              </Link>
+              <>
+                <Link href="/dashboard">
+                  <Button variant="secondary" size="lg" className="rounded-full px-8">내 대시보드</Button>
+                </Link>
+                <Link href="/dashboard/courses">
+                  <Button variant="outline" size="lg" className="rounded-full px-8 border-white/30 bg-white/10 backdrop-blur-sm hover:bg-white/20 text-white">교육 과정 선택하기</Button>
+                </Link>
+              </>
             ) : (
-              <Link href="/login">
-                <Button variant="secondary" size="lg" className="rounded-full px-8">교육 시작하기 (로그인)</Button>
-              </Link>
+              <>
+                <Link href="/login">
+                  <Button variant="secondary" size="lg" className="rounded-full px-8">교육 시작하기 (로그인)</Button>
+                </Link>
+                <Link href="#courses">
+                  <Button variant="outline" size="lg" className="rounded-full px-8 border-white/30 bg-white/10 backdrop-blur-sm hover:bg-white/20 text-white">교육 과정 보기</Button>
+                </Link>
+              </>
             )}
-            <Link href="#courses">
-              <Button variant="outline" size="lg" className="rounded-full px-8 border-white/30 bg-white/10 backdrop-blur-sm hover:bg-white/20 text-white">교육 과정 보기</Button>
-            </Link>
           </div>
         </div>
       </section>

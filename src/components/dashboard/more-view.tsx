@@ -87,6 +87,12 @@ export function MoreView({ profile, user }: MoreViewProps) {
           href: "/dashboard/progress",
           badge: null,
         },
+        {
+          icon: MessageCircle,
+          label: "피드백 (디브리핑)",
+          href: "/dashboard/debriefings",
+          badge: null,
+        },
       ],
     },
     {

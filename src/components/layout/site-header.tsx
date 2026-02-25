@@ -252,8 +252,8 @@ export function SiteHeader() {
                     </SheetContent>
                 </Sheet>
 
-                {/* 중앙: 로고 (Baene 스타일 - 중앙 배치) */}
-                <Link href={user ? "/dashboard" : "/"} className="absolute left-1/2 -translate-x-1/2">
+                {/* 중앙: 로고 — 항상 랜딩페이지(/)로 이동 (교육과정/가격 안내 페이지) */}
+                <Link href="/" className="absolute left-1/2 -translate-x-1/2">
                     <span className="text-lg font-bold text-slate-800 tracking-tight">Ocean Freediving</span>
                 </Link>
 
@@ -276,9 +276,9 @@ export function SiteHeader() {
 
             {/* ====== 데스크톱 헤더 (md 이상) ====== */}
             <div className="hidden md:flex h-16 items-center justify-between px-6 lg:px-8 container">
-                {/* 좌측: 로고 */}
+                {/* 좌측: 로고 — 항상 랜딩페이지(/)로 이동 (교육과정/가격 안내 페이지) */}
                 <div className="flex items-center gap-2">
-                    <Link href={user ? "/dashboard" : "/"} className="flex items-center space-x-2">
+                    <Link href="/" className="flex items-center space-x-2">
                         <span className="text-xl font-bold text-slate-800">Ocean Freediving</span>
                     </Link>
                 </div>
