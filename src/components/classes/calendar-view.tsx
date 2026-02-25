@@ -208,10 +208,10 @@ export default function ClassCalendarView({
 
 
     return (
-        <div className="max-w-5xl mx-auto p-4 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+        <div className="max-w-5xl mx-auto px-3 py-4 md:p-4 space-y-6 md:space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 overflow-x-hidden">
             <div className="grid lg:grid-cols-[1.2fr,1fr] gap-8 items-start">
                 <Card className="border-none shadow-xl shadow-blue-100/50 rounded-3xl overflow-hidden bg-white/80 backdrop-blur-xl">
-                    <CardHeader className="pb-0 pt-8 px-8">
+                    <CardHeader className="pb-0 pt-6 px-4 md:pt-8 md:px-8">
                         <div className="flex flex-col space-y-2">
                              <CardTitle className="text-3xl font-black bg-linear-to-br from-blue-700 to-cyan-500 bg-clip-text text-transparent">
                                 수업 예약
@@ -221,9 +221,9 @@ export default function ClassCalendarView({
                             </CardDescription>
                         </div>
                     </CardHeader>
-                    <CardContent className="p-8">
+                    <CardContent className="p-3 md:p-8">
                         {/* Custom Header with Premium Navigation */}
-                        <div className="flex items-center justify-between px-2 mb-8">
+                        <div className="flex items-center justify-between px-1 md:px-2 mb-4 md:mb-8">
                            <Button 
                                 variant="outline" 
                                 size="icon" 
@@ -321,7 +321,7 @@ export default function ClassCalendarView({
                             }}
                         />
                         
-                        <div className="flex justify-center mt-8 gap-6">
+                        <div className="flex justify-center mt-4 md:mt-8 gap-4 md:gap-6 flex-wrap">
                              {(['pool', 'theory', 'training'] as const).map((type) => (
                                 <div key={type} className="flex items-center gap-2 group cursor-default">
                                     <div className={cn(
@@ -373,25 +373,34 @@ export default function ClassCalendarView({
                                                     {cls.title || getTypeLabel(cls.type)}
                                                 </span>
                                             </div>
-                                             <Button
-                                                onClick={() => handleReserve(cls.id, cls.type)}
-                                                disabled={isReserved || isReserving === cls.id || (cls.current_enrollment >= cls.max_capacity)}
-                                                size="sm"
-                                                className={cn(
-                                                    "rounded-full px-5 font-semibold shadow-lg shadow-blue-200/50",
-                                                    isReserved ? "bg-slate-200 text-slate-500 cursor-not-allowed shadow-none" :
-                                                    isReserving === cls.id ? "bg-slate-100 text-slate-400" :
-                                                    cls.current_enrollment >= cls.max_capacity ? "bg-slate-100 text-slate-400" :
-                                                    "bg-blue-600 hover:bg-blue-700 text-white"
-                                                )}
-                                            >
-                                                {isReserved ? '예약 완료' :
-                                                    isReserving === cls.id ? '처리 중' :
-                                                    cls.current_enrollment >= cls.max_capacity ? '마감됨' : '예약'}
-                                            </Button>
+                                            {(() => {
+                                                const todayStr = format(startOfToday(), 'yyyy-MM-dd')
+                                                const isPastClass = cls.date < todayStr
+                                                
+                                                return (
+                                                    <Button
+                                                        onClick={() => handleReserve(cls.id, cls.type)}
+                                                        disabled={isReserved || isReserving === cls.id || (cls.current_enrollment >= cls.max_capacity) || isPastClass}
+                                                        size="sm"
+                                                        className={cn(
+                                                            "rounded-full px-5 font-semibold shadow-lg shadow-blue-200/50",
+                                                            isPastClass ? "bg-slate-200 text-slate-500 cursor-not-allowed shadow-none" :
+                                                            isReserved ? "bg-slate-200 text-slate-500 cursor-not-allowed shadow-none" :
+                                                            isReserving === cls.id ? "bg-slate-100 text-slate-400" :
+                                                            cls.current_enrollment >= cls.max_capacity ? "bg-slate-100 text-slate-400" :
+                                                            "bg-blue-600 hover:bg-blue-700 text-white"
+                                                        )}
+                                                    >
+                                                        {isPastClass ? '지난 수업' :
+                                                            isReserved ? '예약 완료' :
+                                                            isReserving === cls.id ? '처리 중' :
+                                                            cls.current_enrollment >= cls.max_capacity ? '마감됨' : '예약'}
+                                                    </Button>
+                                                )
+                                            })()}
                                         </div>
                                         
-                                        <div className="flex items-center gap-4 text-sm text-slate-500 bg-slate-50/50 p-3 rounded-xl border border-slate-100">
+                                        <div className="flex flex-wrap items-center gap-2 md:gap-4 text-sm text-slate-500 bg-slate-50/50 p-2.5 md:p-3 rounded-xl border border-slate-100">
                                             <div className="flex items-center gap-1.5 font-medium">
                                                 <Clock className="w-4 h-4 text-blue-400" />
                                                 {cls.time.slice(0, 5)}

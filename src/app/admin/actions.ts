@@ -696,12 +696,14 @@ export async function removeStudentFromClass(
 export async function getClassStudents(classId: string) {
     const supabaseAdmin = getSupabaseAdmin()
 
-    const { data, error } = await supabaseAdmin
-        .from('reservations')
-        .select('id, user_id, status, credit_cost, credit_refunded, debriefing, debriefing_at, profiles:user_id(name, email)')
-        .eq('class_id', classId)
-        .in('status', ['confirmed', 'attended'])
-        .order('created_at', { ascending: true })
+  const { data, error } = await supabaseAdmin
+    .from('reservations')
+    .select(
+      'id, user_id, status, credit_cost, credit_refunded, debriefing, debriefing_at, profiles:user_id(name, email)'
+    )
+    .eq('class_id', classId)
+    .in('status', ['confirmed', 'attended'])
+    .order('created_at', { ascending: true })
 
     if (error) {
         console.error('Error fetching class students:', error)

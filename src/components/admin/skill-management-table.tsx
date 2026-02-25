@@ -14,7 +14,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
-import { useToast } from '@/hooks/use-toast'
+import { toast } from 'sonner'
 import { completeSkill, uncompleteSkill, getStudentSkills } from '@/app/admin/actions/skills'
 import { CheckCircle2, Circle, Loader2, Search } from 'lucide-react'
 
@@ -39,7 +39,7 @@ const skillTypes = [
 const courseLevels = ['입문', '초급', '중급', '고급']
 
 export function SkillManagementTable({ students }: SkillManagementTableProps) {
-  const { toast } = useToast()
+
   const [isPending, startTransition] = useTransition()
   const [searchQuery, setSearchQuery] = useState('')
 
@@ -68,10 +68,8 @@ export function SkillManagementTable({ students }: SkillManagementTableProps) {
 
   const handleCompleteSkill = () => {
     if (!selectedStudent || !selectedLevel || !selectedSkill) {
-      toast({
-        title: '입력 오류',
+      toast.error('입력 오류', {
         description: '학생, 코스 레벨, 스킬 타입을 모두 선택해주세요.',
-        variant: 'destructive',
       })
       return
     }
@@ -85,8 +83,7 @@ export function SkillManagementTable({ students }: SkillManagementTableProps) {
       })
 
       if (result.success) {
-        toast({
-          title: '스킬 완료 처리',
+        toast.success('스킬 완료 처리', {
           description: result.message,
         })
         // 스킬 목록 새로고침
@@ -94,10 +91,8 @@ export function SkillManagementTable({ students }: SkillManagementTableProps) {
         setStudentSkills(skills)
         setNotes('')
       } else {
-        toast({
-          title: '처리 실패',
+        toast.error('처리 실패', {
           description: result.message,
-          variant: 'destructive',
         })
       }
     })
@@ -108,8 +103,7 @@ export function SkillManagementTable({ students }: SkillManagementTableProps) {
       const result = await uncompleteSkill(skillId)
 
       if (result.success) {
-        toast({
-          title: '스킬 완료 취소',
+        toast.success('스킬 완료 취소', {
           description: result.message,
         })
         // 스킬 목록 새로고침
@@ -118,10 +112,8 @@ export function SkillManagementTable({ students }: SkillManagementTableProps) {
           setStudentSkills(skills)
         }
       } else {
-        toast({
-          title: '처리 실패',
+        toast.error('처리 실패', {
           description: result.message,
-          variant: 'destructive',
         })
       }
     })

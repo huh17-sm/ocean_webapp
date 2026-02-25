@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
 import { Checkbox } from '@/components/ui/checkbox'
-import { useToast } from '@/hooks/use-toast'
+import { toast } from 'sonner'
 import { Loader2, Save, Link as LinkIcon, CheckCircle2, Circle, Target, Sparkles, TrendingUp, GraduationCap } from 'lucide-react'
 // Actions
 import { saveDebriefingBulk } from '@/app/admin/actions/debriefings'
@@ -25,7 +25,7 @@ export function ClassClosingManager({
   reservations,
   existingDebriefings,
 }: ClassClosingManagerProps) {
-  const { toast } = useToast()
+
   const [isPending, startTransition] = useTransition()
 
   // Media Link State
@@ -94,8 +94,7 @@ export function ClassClosingManager({
              throw new Error(debriefResult.message || '디브리핑 저장 실패')
         }
         
-        toast({
-          title: '저장 완료',
+        toast.success('저장 완료', {
           description: '수업 마무리 정보가 성공적으로 저장되었습니다.',
         })
 
@@ -103,10 +102,8 @@ export function ClassClosingManager({
         // specifically for attendance status UI update if revalidatePath isn't enough for client state
         // window.location.reload() // Optional, Next.js should handle revalidation
       } catch (error: any) {
-        toast({
-          title: '저장 실패',
+        toast.error('저장 실패', {
           description: error.message || '저장 중 오류가 발생했습니다.',
-          variant: 'destructive',
         })
       }
     })

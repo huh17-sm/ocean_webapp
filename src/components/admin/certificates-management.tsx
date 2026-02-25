@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
-import { useToast } from '@/hooks/use-toast'
+import { toast } from 'sonner'
 import {
   approveCertificate,
   rejectCertificate,
@@ -72,7 +72,7 @@ export function CertificatesManagement({
   pendingCertificates: initialPending,
   allCertificates: initialAll,
 }: CertificatesManagementProps) {
-  const { toast } = useToast()
+
   const [isPending, startTransition] = useTransition()
   const [pendingCertificates, setPendingCertificates] = useState(initialPending)
   const [allCertificates, setAllCertificates] = useState(initialAll)
@@ -111,18 +111,15 @@ export function CertificatesManagement({
       })
 
       if (result.success) {
-        toast({
-          title: '승인 완료',
+        toast.success('승인 완료', {
           description: result.message,
         })
         setApproveDialogOpen(false)
         setAdminNotes('')
         refreshData()
       } else {
-        toast({
-          title: '승인 실패',
+        toast.error('승인 실패', {
           description: result.message,
-          variant: 'destructive',
         })
       }
     })
@@ -130,10 +127,8 @@ export function CertificatesManagement({
 
   const handleReject = () => {
     if (!selectedCert || !rejectionReason) {
-      toast({
-        title: '입력 오류',
+      toast.error('입력 오류', {
         description: '거부 사유를 입력해주세요.',
-        variant: 'destructive',
       })
       return
     }
@@ -146,8 +141,7 @@ export function CertificatesManagement({
       })
 
       if (result.success) {
-        toast({
-          title: '거부 완료',
+        toast.success('거부 완료', {
           description: result.message,
         })
         setRejectDialogOpen(false)
@@ -155,10 +149,8 @@ export function CertificatesManagement({
         setAdminNotes('')
         refreshData()
       } else {
-        toast({
-          title: '거부 실패',
+        toast.error('거부 실패', {
           description: result.message,
-          variant: 'destructive',
         })
       }
     })
@@ -166,10 +158,8 @@ export function CertificatesManagement({
 
   const handleIssue = () => {
     if (!selectedCert || !certificateNumber) {
-      toast({
-        title: '입력 오류',
+      toast.error('입력 오류', {
         description: '자격증 레벨을 입력해주세요.',
-        variant: 'destructive',
       })
       return
     }
@@ -182,8 +172,7 @@ export function CertificatesManagement({
       })
 
       if (result.success) {
-        toast({
-          title: '발급 완료',
+        toast.success('발급 완료', {
           description: result.message,
         })
         setIssueDialogOpen(false)
@@ -191,10 +180,8 @@ export function CertificatesManagement({
         setAdminNotes('')
         refreshData()
       } else {
-        toast({
-          title: '발급 실패',
+        toast.error('발급 실패', {
           description: result.message,
-          variant: 'destructive',
         })
       }
     })
@@ -202,10 +189,8 @@ export function CertificatesManagement({
 
   const handleDirectIssue = () => {
     if (!directUserId || !directLevel || !directNumber) {
-      toast({
-        title: '입력 오류',
+      toast.error('입력 오류', {
         description: '모든 필드를 입력해주세요.',
-        variant: 'destructive',
       })
       return
     }
@@ -219,8 +204,7 @@ export function CertificatesManagement({
       })
 
       if (result.success) {
-        toast({
-          title: '발급 완료',
+        toast.success('발급 완료', {
           description: result.message,
         })
         setDirectIssueOpen(false)
@@ -230,10 +214,8 @@ export function CertificatesManagement({
         setDirectNotes('')
         refreshData()
       } else {
-        toast({
-          title: '발급 실패',
+        toast.error('발급 실패', {
           description: result.message,
-          variant: 'destructive',
         })
       }
     })

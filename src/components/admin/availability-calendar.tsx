@@ -546,8 +546,11 @@ export default function AdminAvailabilityCalendar({
                                                                             "w-3 h-3 rounded-full shadow-sm ring-2 ring-white",
                                                                             CLASS_COLORS[c.type as keyof typeof CLASS_COLORS] || CLASS_COLORS.default
                                                                         )} />
-                                                                        <div className="flex flex-col">
-                                                                            <span className="font-bold text-slate-800">{c.time.slice(0, 5)}</span>
+                                                                        <div className="flex flex-col gap-0.5">
+                                                                            <div className="flex items-center gap-2">
+                                                                                <span className="font-bold text-slate-800">{c.time.slice(0, 5)}</span>
+                                                                                {c.title && <span className="font-bold text-slate-700 text-sm">{c.title}</span>}
+                                                                            </div>
                                                                             <span className="text-xs font-medium text-slate-500 flex items-center gap-1 flex-wrap">
                                                                                 {CLASS_TYPES[c.type as keyof typeof CLASS_TYPES] || c.type}
                                                                                 {c.location && (

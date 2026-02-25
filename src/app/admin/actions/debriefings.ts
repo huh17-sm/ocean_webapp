@@ -450,3 +450,56 @@ export async function getDebriefingsByStudent(userId: string) {
 
   return data || []
 }
+
+// ============================================
+// 5. 수업 앨범(미디어 링크) 저장
+// ============================================
+
+/**
+ * 특정 수업의 사진 앨범(미디어 링크) 업데이트
+ */
+export async function updateClassMediaLink(
+  classId: string,
+  mediaLink: string
+): Promise<{ success: boolean; message: string }> {
+  try {
+    const supabase = await createClient()
+    const supabaseAdmin = getSupabaseAdmin()
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+
+    if (!user) {
+      return { success: false, message: '로그인이 필요합니다.' }
+    }
+
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .single()
+
+    if (!profile || !['instructor', 'admin'].includes(profile.role)) {
+      return { success: false, message: '권한이 없습니다.' }
+    }
+
+    const { error } = await supabaseAdmin
+      .from('classes')
+      .update({ media_link: mediaLink || null })
+      .eq('id', classId)
+
+    if (error) {
+      console.error('Error updating media link:', error)
+      return { success: false, message: '미디어 링크 저장에 실패했습니다.' }
+    }
+
+    revalidatePath('/admin/debriefings')
+    revalidatePath('/admin/classes')
+    
+    return { success: true, message: '사진 앨범 링크가 저장되었습니다.' }
+  } catch (error) {
+    console.error('Error in updateClassMediaLink:', error)
+    return { success: false, message: '오류가 발생했습니다.' }
+  }
+}

@@ -26,11 +26,19 @@ export default async function ClassesPage() {
 
     const userReservedClassIds = reservations?.map(r => r.class_id) || []
 
-    // 2. 전체 수업 목록 조회 (오늘 이후)
+    // 2. 전체 수업 목록 조회 (이번 달 1일 이후)
+    const today = new Date();
+    // UTC 고려해서 안전하게 첫날 생성 (로컬 시간 기준)
+    const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1).toLocaleDateString('en-CA'); // YYYY-MM-DD 형식 보장 (한국 시간대에 맞춰짐)
+
+    // 만약 더 이전 달력을 보고 싶다면, 클라이언트 쪽(CalendarView)에서 월 이동 시 API를 다시 호출하도록 리팩토링이 필요하지만
+    // 우선 이번 달과 그 이후의 모든 수업을 가져오도록 구성 (현재 CalendarView가 클라이언트 사이드에서 필터링 하므로)
+    // 데이터량이 많지 않으므로 전체 혹은 최근 N개월 데이터를 통째로 넘기는 방식도 가능.
+    // 여기서는 일단 이번 달 1일 이후 데이터를 가져옵니다.
     const { data: classes } = await supabase
         .from('classes')
         .select('*')
-        .gte('date', new Date().toISOString().split('T')[0])
+        .gte('date', firstDayOfMonth)
         .order('date', { ascending: true })
         .order('time', { ascending: true })
 

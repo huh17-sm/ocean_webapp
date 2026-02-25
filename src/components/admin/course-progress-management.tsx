@@ -14,7 +14,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Switch } from '@/components/ui/switch'
-import { useToast } from '@/hooks/use-toast'
+import { toast } from 'sonner'
 import {
   updateCourseProgress,
   getStudentCourseProgress,
@@ -42,7 +42,7 @@ const statusOptions = [
 export function CourseProgressManagement({
   students,
 }: CourseProgressManagementProps) {
-  const { toast } = useToast()
+
   const [isPending, startTransition] = useTransition()
   const [searchQuery, setSearchQuery] = useState('')
 
@@ -85,10 +85,8 @@ export function CourseProgressManagement({
 
   const handleUpdateProgress = () => {
     if (!selectedStudent || !courseLevel) {
-      toast({
-        title: '입력 오류',
+      toast.error('입력 오류', {
         description: '학생과 코스 레벨을 선택해주세요.',
-        variant: 'destructive',
       })
       return
     }
@@ -104,18 +102,15 @@ export function CourseProgressManagement({
       })
 
       if (result.success) {
-        toast({
-          title: '진도 업데이트',
+        toast.success('진도 업데이트', {
           description: result.message,
         })
         // 진도 목록 새로고침
         const progress = await getStudentCourseProgress(selectedStudent.id)
         setStudentProgress(progress)
       } else {
-        toast({
-          title: '업데이트 실패',
+        toast.error('업데이트 실패', {
           description: result.message,
-          variant: 'destructive',
         })
       }
     })

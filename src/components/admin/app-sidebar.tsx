@@ -3,7 +3,7 @@
 import React from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Home, Users, Calendar, Settings, BookOpen, CalendarRange, MapPin, CheckSquare, MessageSquare, Award, CreditCard, FileText, GraduationCap } from 'lucide-react'
+import { Home, Users, Settings, BookOpen, CalendarRange, MapPin, MessageSquare, GraduationCap, CreditCard } from 'lucide-react'
 import {
     Sidebar,
     SidebarContent,
@@ -19,52 +19,67 @@ import {
 } from '@/components/ui/sidebar'
 import { Button } from '@/components/ui/button'
 
-// Menu items.
-const items = [
+// 메뉴 항목을 3개 그룹으로 분류
+const menuGroups = [
     {
-        title: 'Dashboard',
-        url: '/admin',
-        icon: Home,
+        label: '메인',
+        items: [
+            {
+                title: 'Dashboard',
+                url: '/admin',
+                icon: Home,
+            },
+        ],
     },
     {
-        title: '수업/일정 관리',
-        url: '/admin/classes/availability',
-        icon: CalendarRange,
+        label: '수업 & 교육',
+        items: [
+            {
+                title: '수업/일정 관리',
+                url: '/admin/classes/availability',
+                icon: CalendarRange,
+            },
+            {
+                title: '과정 설정',
+                url: '/admin/courses',
+                icon: BookOpen,
+            },
+            {
+                title: '교육생 관리',
+                url: '/admin/course-management',
+                icon: GraduationCap,
+            },
+            {
+                title: '디브리핑 관리',
+                url: '/admin/debriefings',
+                icon: MessageSquare,
+            },
+        ],
     },
     {
-        title: '교육 과정 관리',
-        url: '/admin/courses',
-        icon: BookOpen,
-    },
-    {
-        title: '통합 교육 관리',
-        url: '/admin/course-management',
-        icon: GraduationCap,
-    },
-    {
-        title: '디브리핑 관리',
-        url: '/admin/debriefings',
-        icon: MessageSquare,
-    },
-    {
-        title: '수영장 관리',
-        url: '/admin/pools',
-        icon: MapPin,
-    },
-    {
-        title: '회원 관리',
-        url: '/admin/users',
-        icon: Users,
-    },
-    {
-        title: '크레딧 관리',
-        url: '/admin/credits',
-        icon: CreditCard,
-    },
-    {
-        title: '시스템 설정',
-        url: '/admin/settings',
-        icon: Settings,
+        label: '회원 & 운영',
+        items: [
+            {
+                title: '회원 관리',
+                url: '/admin/users',
+                icon: Users,
+            },
+            {
+                title: '크레딧 관리',
+                url: '/admin/credits',
+                icon: CreditCard,
+            },
+            {
+                title: '수영장 관리',
+                url: '/admin/pools',
+                icon: MapPin,
+            },
+            {
+                title: '시스템 설정',
+                url: '/admin/settings',
+                icon: Settings,
+            },
+        ],
     },
 ]
 
@@ -72,6 +87,7 @@ export function AdminAppSidebar({ className, ...props }: React.ComponentProps<ty
     const pathname = usePathname()
     const { setOpenMobile } = useSidebar()
 
+    // 모바일에서 메뉴 클릭 시 사이드바 닫기
     const handleNavClick = () => {
         if (typeof window !== 'undefined' && window.innerWidth < 768) {
             setOpenMobile(false)
@@ -84,27 +100,29 @@ export function AdminAppSidebar({ className, ...props }: React.ComponentProps<ty
                 <h2 className="text-xl font-bold bg-linear-to-r from-primary to-accent bg-clip-text text-transparent">Ocean Admin</h2>
             </SidebarHeader>
             <SidebarContent>
-                <SidebarGroup>
-                    <SidebarGroupLabel>관리 메뉴</SidebarGroupLabel>
-                    <SidebarGroupContent>
-                        <SidebarMenu>
-                            {items.map((item) => {
-                                const isActive = pathname === item.url || pathname.startsWith(item.url + '/')
+                {menuGroups.map((group) => (
+                    <SidebarGroup key={group.label}>
+                        <SidebarGroupLabel>{group.label}</SidebarGroupLabel>
+                        <SidebarGroupContent>
+                            <SidebarMenu>
+                                {group.items.map((item) => {
+                                    const isActive = pathname === item.url || pathname.startsWith(item.url + '/')
 
-                                return (
-                                    <SidebarMenuItem key={item.title}>
-                                        <SidebarMenuButton asChild isActive={isActive}>
-                                            <Link href={item.url} onClick={handleNavClick}>
-                                                <item.icon />
-                                                <span>{item.title}</span>
-                                            </Link>
-                                        </SidebarMenuButton>
-                                    </SidebarMenuItem>
-                                )
-                            })}
-                        </SidebarMenu>
-                    </SidebarGroupContent>
-                </SidebarGroup>
+                                    return (
+                                        <SidebarMenuItem key={item.title}>
+                                            <SidebarMenuButton asChild isActive={isActive}>
+                                                <Link href={item.url} onClick={handleNavClick}>
+                                                    <item.icon />
+                                                    <span>{item.title}</span>
+                                                </Link>
+                                            </SidebarMenuButton>
+                                        </SidebarMenuItem>
+                                    )
+                                })}
+                            </SidebarMenu>
+                        </SidebarGroupContent>
+                    </SidebarGroup>
+                ))}
             </SidebarContent>
             <SidebarFooter className="p-4 border-t">
                 <Link href="/dashboard">

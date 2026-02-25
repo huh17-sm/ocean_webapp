@@ -13,6 +13,7 @@ import { Badge } from '@/components/ui/badge'
 import { Trash2, Link as LinkIcon } from 'lucide-react'
 import { deleteClass } from '@/app/admin/actions'
 import { useTransition } from 'react'
+import { CLASS_TYPES } from '@/lib/constants'
 
 interface ClassItem {
     id: string
@@ -37,7 +38,7 @@ function ClassRow({ classItem }: { classItem: ClassItem }) {
             <TableCell>{classItem.time}</TableCell>
             <TableCell>
                 <Badge variant={classItem.type === 'pool' ? 'default' : 'secondary'}>
-                    {classItem.type === 'pool' ? '풀장' : classItem.type === 'theory' ? '이론' : '트레이닝'}
+                    {CLASS_TYPES[classItem.type as keyof typeof CLASS_TYPES] || classItem.type}
                 </Badge>
             </TableCell>
             <TableCell>
