@@ -221,6 +221,7 @@ export function DebriefingManagement({
   const renderClassList = (emptyMessage: string) => (
     <div className="space-y-4">
       <div className="space-y-2 min-h-[460px]">
+      <div className="space-y-2 min-h-[460px]">
         {paginatedClasses.length === 0 ? (
           <p className="text-center text-slate-500 py-8 text-sm">{emptyMessage}</p>
         ) : (
