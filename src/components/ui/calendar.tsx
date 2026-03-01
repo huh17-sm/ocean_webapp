@@ -129,9 +129,10 @@ export function CalendarDayButton({
   day,
   modifiers,
   dayClasses,
+  hasRequest,
   children, // children prop 추가
   ...props
-}: React.ComponentProps<typeof DayButton> & { dayClasses?: Array<{ id: string; type: 'pool' | 'theory' | 'training' }> }) {
+}: React.ComponentProps<typeof DayButton> & { dayClasses?: Array<{ id: string; type: 'pool' | 'theory' | 'training' }>, hasRequest?: boolean }) {
   const defaultClassNames = getDefaultClassNames()
 
   const ref = React.useRef<HTMLButtonElement>(null)
@@ -163,9 +164,10 @@ export function CalendarDayButton({
       {/* If children is passed (e.g. block reason) and not custom component override, render it here */}
       {React.isValidElement(children) && !isCustomComponent && children}
 
-      {dayClasses && dayClasses.length > 0 && (
+      {/* 수업 점(dot) + 요청 점(노란색) 표시 영역 */}
+      {((dayClasses && dayClasses.length > 0) || hasRequest) && (
         <div className="absolute bottom-1 flex gap-0.5 justify-center flex-wrap z-10 w-full px-0.5">
-          {dayClasses.slice(0, 3).map((cls, i) => (
+          {dayClasses && dayClasses.slice(0, 3).map((cls, i) => (
             <div
               key={cls.id + i}
               className={cn(
@@ -176,6 +178,10 @@ export function CalendarDayButton({
               )}
             />
           ))}
+          {/* 사용자 수업 요청이 있는 날짜에 노란 점 표시 */}
+          {hasRequest && (
+            <div className="w-1.5 h-1.5 rounded-full bg-yellow-400 ring-1 ring-white/50 animate-pulse" />
+          )}
         </div>
       )}
     </div>

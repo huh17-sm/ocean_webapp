@@ -95,6 +95,9 @@ export function ReservationList({ reservations }: { reservations: ReservationWit
         // 출석 완료된 예약은 취소 불가
         if (res.status === 'attended') return false
 
+        // 관리자가 수업 완료 처리한 경우 취소 불가
+        if (res.classes.is_completed) return false
+
         // 수업 날짜가 지났으면 취소 불가
         const classDate = new Date(res.classes.date + "T23:59:59")
         const now = new Date()

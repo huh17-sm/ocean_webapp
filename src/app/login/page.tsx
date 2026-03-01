@@ -3,7 +3,7 @@
 import { createClient } from '@/utils/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 
 export default function LoginPage() {
@@ -13,6 +13,22 @@ export default function LoginPage() {
     const [password, setPassword] = useState('')
     const [loading, setLoading] = useState(false)
 
+    // 이미 로그인된 사용자는 자동으로 대시보드로 이동 (화면을 막지 않음)
+    useEffect(() => {
+        const checkSession = async () => {
+            try {
+                const { data: { user } } = await supabase.auth.getUser()
+                if (user) {
+                    router.replace('/dashboard')
+                }
+            } catch {
+                // 세션 없음 — 로그인 페이지 유지
+            }
+        }
+        checkSession()
+    }, [supabase, router])
+
+    // OAuth 로그인 (카카오, 구글)
     const handleLogin = (provider: 'google' | 'kakao') => {
         supabase.auth.signInWithOAuth({
             provider,
@@ -22,6 +38,7 @@ export default function LoginPage() {
         })
     }
 
+    // 이메일/비밀번호 로그인
     const handleEmailSignIn = async () => {
         setLoading(true)
         const { error } = await supabase.auth.signInWithPassword({
@@ -32,11 +49,12 @@ export default function LoginPage() {
             alert(error.message)
         } else {
             router.refresh()
-            router.push('/admin') // Redirect to admin for convenience
+            router.push('/dashboard')
         }
         setLoading(false)
     }
 
+    // 이메일/비밀번호 회원가입
     const handleEmailSignUp = async () => {
         setLoading(true)
         const { error } = await supabase.auth.signUp({
@@ -45,7 +63,7 @@ export default function LoginPage() {
             options: {
                 emailRedirectTo: `${location.origin}/auth/callback`,
                 data: {
-                    full_name: email.split('@')[0], // Default name
+                    full_name: email.split('@')[0],
                 }
             },
         })

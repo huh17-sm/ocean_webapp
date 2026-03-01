@@ -11,8 +11,9 @@ import { formatCredits } from '@/lib/credit-constants'
 import { toast } from 'sonner'
 import { cancelReservation } from '@/app/classes/actions'
 import { useRouter } from 'next/navigation'
+import { differenceInCalendarDays } from 'date-fns'
 
-import { CLASS_TYPES } from '@/lib/constants'
+import { CLASS_TYPES, REFUND_POLICY, DEFAULT_CREDIT_COSTS } from '@/lib/constants'
 
 interface ReservationsViewProps {
   reservations: any[]
@@ -41,8 +42,31 @@ export function ReservationsView({ reservations }: ReservationsViewProps) {
     }
   }
 
-  const handleCancel = async (reservationId: string) => {
-    if (!confirm('정말 이 예약을 취소하시겠습니까?')) return
+  const handleCancel = async (reservationId: string, reservation: any) => {
+    // 수업 날짜까지 남은 일수 계산
+    const classDate = new Date(reservation.classes?.date)
+    const today = new Date()
+    const diffDays = differenceInCalendarDays(classDate, today)
+    
+    // 크레딧 비용과 환불 예상액 계산
+    const creditCost = reservation.credit_cost || DEFAULT_CREDIT_COSTS[reservation.classes?.type as keyof typeof DEFAULT_CREDIT_COSTS] || 100
+    let expectedRefund = 0
+    let refundMessage = ''
+
+    if (diffDays < 0) {
+      refundMessage = '이미 지난 수업은 취소할 수 없습니다.'
+    } else if (diffDays <= REFUND_POLICY.SAME_DAY.daysBefore) {
+      expectedRefund = 0
+      refundMessage = REFUND_POLICY.SAME_DAY.message
+    } else if (diffDays >= REFUND_POLICY.ONE_TO_THREE_DAYS.daysBeforeStart && diffDays <= REFUND_POLICY.ONE_TO_THREE_DAYS.daysBeforeEnd) {
+      expectedRefund = Math.floor(creditCost * REFUND_POLICY.ONE_TO_THREE_DAYS.refundRate)
+      refundMessage = REFUND_POLICY.ONE_TO_THREE_DAYS.message
+    } else {
+      expectedRefund = Math.floor(creditCost * REFUND_POLICY.FOUR_OR_MORE_DAYS.refundRate)
+      refundMessage = REFUND_POLICY.FOUR_OR_MORE_DAYS.message
+    }
+
+    if (!confirm(`정말 예약을 취소하시겠습니까?\n\n📋 환불 안내\n${refundMessage}\n예상 환불 크레딧: ${expectedRefund}C`)) return
 
     setIsLoading(reservationId)
     try {
@@ -160,12 +184,13 @@ export function ReservationsView({ reservations }: ReservationsViewProps) {
                     {/* 액션 버튼 */}
                     <div className="flex gap-2 mt-4">
                       {reservation.status === 'confirmed' &&
+                        !reservation.classes?.is_completed &&
                         new Date(reservation.classes?.date) >= new Date() && (
                           <Button
                             variant="destructive"
                             size="sm"
                             className="w-full"
-                            onClick={() => handleCancel(reservation.id)}
+                            onClick={() => handleCancel(reservation.id, reservation)}
                             disabled={isLoading === reservation.id}
                           >
                             <X className="h-4 w-4 mr-1" />

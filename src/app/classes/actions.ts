@@ -178,12 +178,12 @@ export async function cancelReservation(reservationId: string) {
   }
 
   // 2. 예약 확인 (본인 예약인지)
-  const { data: reservation } = await supabase
+  const { data: reservation } = (await supabase
     .from("reservations")
-    .select("*, classes(current_enrollment, type, date, time)")
+    .select("*, classes(current_enrollment, type, date, time, is_completed)")
     .eq("id", reservationId)
     .eq("user_id", user.id)
-    .single() as { data: ReservationWithClass | null };
+    .single()) as { data: ReservationWithClass | null };
 
   if (!reservation) {
     return { error: "예약 정보를 찾을 수 없습니다." };
@@ -196,6 +196,11 @@ export async function cancelReservation(reservationId: string) {
   // 2-1. 출석 완료된 예약은 취소 불가
   if (reservation.status === "attended") {
     return { error: "출석 완료된 예약은 취소할 수 없습니다." };
+  }
+
+  // 2-1-1. 관리자가 수업 완료 처리한 경우 취소 불가
+  if (reservation.classes?.is_completed) {
+    return { error: "완료 처리된 수업은 취소할 수 없습니다." };
   }
 
   // 2-2. 수업 시작일 기준 취소/환불 정책 적용
@@ -214,7 +219,7 @@ export async function cancelReservation(reservationId: string) {
     const classDateOnly = new Date(
       classDateTime.getFullYear(),
       classDateTime.getMonth(),
-      classDateTime.getDate()
+      classDateTime.getDate(),
     );
     const diffTime = classDateOnly.getTime() - today.getTime();
     diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
@@ -268,10 +273,12 @@ export async function cancelReservation(reservationId: string) {
       diffDays >= REFUND_POLICY.ONE_TO_THREE_DAYS.daysBeforeStart &&
       diffDays <= REFUND_POLICY.ONE_TO_THREE_DAYS.daysBeforeEnd
     ) {
-      finalRefundAmount = baseRefundAmount * REFUND_POLICY.ONE_TO_THREE_DAYS.refundRate;
+      finalRefundAmount =
+        baseRefundAmount * REFUND_POLICY.ONE_TO_THREE_DAYS.refundRate;
       memoOverride = `${classType} 취소 환불 (${finalRefundAmount}C, 80% 차감 적용)`;
     } else if (diffDays >= REFUND_POLICY.FOUR_OR_MORE_DAYS.daysBefore) {
-      finalRefundAmount = baseRefundAmount * REFUND_POLICY.FOUR_OR_MORE_DAYS.refundRate;
+      finalRefundAmount =
+        baseRefundAmount * REFUND_POLICY.FOUR_OR_MORE_DAYS.refundRate;
       memoOverride = `${classType} 취소 전액 환불 (${finalRefundAmount}C)`;
     } else {
       // 예외 폴백 (거의 발생 안 함)
@@ -284,7 +291,7 @@ export async function cancelReservation(reservationId: string) {
         finalRefundAmount,
         reservationId,
         classType,
-        memoOverride
+        memoOverride,
       );
 
       if (!refundResult.success) {
@@ -298,23 +305,23 @@ export async function cancelReservation(reservationId: string) {
     }
   }
 
-    // 3-3. 수업 인원 감소 (RPC - 원자적 트랜잭션, Race Condition 방지)
-    if (reservation.classes) {
-        const { error: enrollmentError } = await supabase.rpc(
-            'decrement_enrollment',
-            { p_class_id: reservation.class_id }
-        )
+  // 3-3. 수업 인원 감소 (RPC - 원자적 트랜잭션, Race Condition 방지)
+  if (reservation.classes) {
+    const { error: enrollmentError } = await supabase.rpc(
+      "decrement_enrollment",
+      { p_class_id: reservation.class_id },
+    );
 
-        if (enrollmentError) {
-            console.error('Enrollment decrement failed:', enrollmentError)
-            // 취소는 이미 처리됨, 인원 감소 실패는 로그 기록
-        }
+    if (enrollmentError) {
+      console.error("Enrollment decrement failed:", enrollmentError);
+      // 취소는 이미 처리됨, 인원 감소 실패는 로그 기록
     }
+  }
 
-    revalidatePath('/classes')
-    revalidatePath('/dashboard')
+  revalidatePath("/classes");
+  revalidatePath("/dashboard");
 
-    return { success: true };
+  return { success: true };
 }
 
 export async function requestClass(formData: {
@@ -547,8 +554,6 @@ async function approveClassRequest(supabase: any, requestId: string) {
     classTime = `${timeParts[0]}:${timeParts[1]}`;
   }
 
-
-
   // Service Role Key로 수업 생성 (RLS 우회)
   const supabaseAdmin = getSupabaseAdmin();
 
@@ -571,8 +576,6 @@ async function approveClassRequest(supabase: any, requestId: string) {
       error: `수업 생성 중 오류가 발생했습니다: ${createError?.message || "알 수 없는 오류"}`,
     };
   }
-
-
 
   // 2-1. 타입별 크레딧 비용 조회
   const { data: typeSetting } = await supabaseAdmin
@@ -602,8 +605,6 @@ async function approveClassRequest(supabase: any, requestId: string) {
     };
   }
 
-
-
   // 2-3. 크레딧 차감 (RPC - 원자적 트랜잭션)
   if (creditCost > 0) {
     const { data: deductResult, error: deductError } = await supabaseAdmin.rpc(
@@ -627,7 +628,6 @@ async function approveClassRequest(supabase: any, requestId: string) {
         deductResult,
       );
     } else {
-
     }
   }
 
@@ -667,7 +667,6 @@ export async function updateAvailabilityBlock(
   endDate: string,
   reason?: string,
 ) {
-
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("availability_blocks")
@@ -678,8 +677,6 @@ export async function updateAvailabilityBlock(
     })
     .eq("id", id)
     .select();
-
-
 
   if (error) return { error: error.message };
   revalidatePath("/admin/classes/availability");
@@ -696,11 +693,8 @@ export async function getMyClassRequests() {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) {
-
     return [];
   }
-
-
 
   // 본인의 요청만 조회
   const { data, error } = await supabase
@@ -713,8 +707,6 @@ export async function getMyClassRequests() {
     console.error("Error fetching my class requests:", error);
     return [];
   }
-
-
 
   return data || [];
 }
@@ -772,8 +764,6 @@ export async function deleteMyClassRequest(requestId: string) {
     return { error: "삭제 중 오류가 발생했습니다." };
   }
 
-
-
   revalidatePath("/dashboard");
 
   return { success: true };
@@ -821,6 +811,7 @@ export async function cancelMyClassRequest(requestId: string) {
   }
 
   revalidatePath("/dashboard");
+  revalidatePath("/classes"); // 캘린더 페이지에서도 목록이 사라지도록 갱신
   revalidatePath("/admin/classes/availability"); // 관리자 페이지에서도 사라지도록 갱신
 
   return { success: true };

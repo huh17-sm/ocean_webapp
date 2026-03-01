@@ -27,7 +27,8 @@ export default async function ReservationsPage() {
         time,
         type,
         location,
-        max_capacity
+        max_capacity,
+        is_completed
       )
     `)
     .eq('user_id', user.id)

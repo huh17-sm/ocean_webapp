@@ -9,6 +9,7 @@ import { useRouter, usePathname } from "next/navigation"
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet"
 import { Menu, Coins } from "lucide-react"
 import { getUserCredits } from "@/app/admin/actions/credits"
+import { signOutAction } from "@/app/auth/actions"
 import { formatCredits } from "@/lib/credit-constants"
 import { NAV_ITEMS, isNavItemActive } from "@/types/navigation"
 
@@ -147,16 +148,19 @@ export function SiteHeader() {
         }
     }
 
+    // 서버 사이드에서 로그아웃 처리 (쿠키까지 확실히 정리)
     const handleLogout = async () => {
         try {
-            await supabase.auth.signOut()
-            // State update will happen in onAuthStateChange('SIGNED_OUT')
-        } catch (error) {
-            console.error('Logout error:', error)
-            // Force local cleanup even if server logout fails
+            // 클라이언트 상태 먼저 초기화
             setUser(null)
             setIsAdmin(false)
             setCredits(0)
+            // 서버 액션으로 로그아웃 (쿠키 정리 + 리다이렉트)
+            await signOutAction()
+        } catch (error) {
+            console.error('Logout error:', error)
+            // 서버 액션 실패 시 클라이언트에서도 시도
+            await supabase.auth.signOut()
             router.refresh()
             router.push('/')
         }

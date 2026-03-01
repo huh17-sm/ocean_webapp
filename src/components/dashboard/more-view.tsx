@@ -22,9 +22,9 @@ import {
   AlertTriangle,
   BookOpen,
 } from "lucide-react";
-import { createClient } from "@/utils/supabase/client";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { signOutAction } from "@/app/auth/actions";
 
 interface MoreViewProps {
   profile: any;
@@ -33,13 +33,11 @@ interface MoreViewProps {
 
 export function MoreView({ profile, user }: MoreViewProps) {
   const router = useRouter();
-  const supabase = createClient();
 
+  // 서버 사이드에서 로그아웃 처리 (쿠키까지 확실히 정리)
   const handleLogout = async () => {
-    await supabase.auth.signOut();
     toast.success("로그아웃되었습니다");
-    router.push("/");
-    router.refresh();
+    await signOutAction();
   };
 
   const menuSections = [

@@ -26,6 +26,14 @@ export default async function ClassesPage() {
 
     const userReservedClassIds = reservations?.map(r => r.class_id) || []
 
+    // 1.6. 사용자의 수업 요청 내역 조회 (pending 상태만 - 캘린더에 표시용)
+    const { data: myRequests } = await supabase
+        .from('class_requests')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('status', 'pending')
+        .order('date', { ascending: true })
+
     // 2. 전체 수업 목록 조회 (이번 달 1일 이후)
     const today = new Date();
     // UTC 고려해서 안전하게 첫날 생성 (로컬 시간 기준)
@@ -78,6 +86,7 @@ export default async function ClassesPage() {
                     pools={pools || []}
                     classTypeSettings={classTypeSettings || []}
                     userReservedClassIds={userReservedClassIds}
+                    userRequests={myRequests || []}
                 />
             </div>
         </div>

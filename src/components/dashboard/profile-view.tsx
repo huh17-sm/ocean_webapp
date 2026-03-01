@@ -11,6 +11,7 @@ import { ArrowLeft, User, Waves, Settings, LogOut, Trash2, Edit2, Save, X } from
 import { toast } from 'sonner'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/utils/supabase/client'
+import { signOutAction } from '@/app/auth/actions'
 
 interface ProfileViewProps {
   profile: any
@@ -91,10 +92,9 @@ export function ProfileView({ profile, user }: ProfileViewProps) {
     }
   }
 
+  // 서버 사이드에서 로그아웃 처리 (쿠키까지 확실히 정리)
   const handleLogout = async () => {
-    await supabase.auth.signOut()
-    router.push('/')
-    router.refresh()
+    await signOutAction()
   }
 
   const handleDeleteAccount = async () => {

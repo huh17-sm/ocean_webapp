@@ -12,10 +12,10 @@ import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { TimePicker } from "@/components/ui/time-picker"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import { Clock, MapPin, Users, Plus, Calendar as CalendarIcon, Send, ChevronLeft, ChevronRight, Link as LinkIcon } from "lucide-react"
+import { Clock, MapPin, Users, Plus, Calendar as CalendarIcon, Send, ChevronLeft, ChevronRight, Link as LinkIcon, X, Loader2 } from "lucide-react"
 import { format, isSameDay, parseISO, startOfToday, addMonths, subMonths } from 'date-fns'
 import { ko, enUS } from 'date-fns/locale'
-import { reserveClass, requestClass } from '@/app/classes/actions'
+import { reserveClass, requestClass, cancelMyClassRequest } from '@/app/classes/actions'
 import { useRouter } from 'next/navigation'
 import { cn } from "@/lib/utils"
 import { Pool } from '@/types'
@@ -43,6 +43,19 @@ interface AvailabilityBlock {
     reason?: string
 }
 
+// 사용자의 수업 요청 데이터 타입 (class_requests 테이블)
+interface ClassRequest {
+    id: string
+    date: string
+    type: string
+    time_slot: string
+    location: string
+    participants: number
+    user_instructions?: string
+    status: string
+    created_at: string
+}
+
 import { toast } from "sonner"
 import { useConfirm } from "@/components/ui/confirm-dialog"
 
@@ -52,14 +65,16 @@ export default function ClassCalendarView({
     blockedPeriods = [],
     pools = [],
     classTypeSettings = [],
-    userReservedClassIds = []
+    userReservedClassIds = [],
+    userRequests = []
 }: {
     initialClasses: ClassData[],
     userCredits: number,
     blockedPeriods?: AvailabilityBlock[],
     pools?: Pool[],
     classTypeSettings?: ClassTypeSetting[],
-    userReservedClassIds?: string[]
+    userReservedClassIds?: string[],
+    userRequests?: ClassRequest[]
 }) {
     const { confirm } = useConfirm()
 
@@ -68,6 +83,7 @@ export default function ClassCalendarView({
     const [isReserving, setIsReserving] = useState<string | null>(null)
     const [isRequesting, setIsRequesting] = useState(false)
     const [requestOpen, setRequestOpen] = useState(false)
+    const [isCancelling, setIsCancelling] = useState<string | null>(null)
     const router = useRouter()
 
     // Request form state
@@ -86,6 +102,12 @@ export default function ClassCalendarView({
         return initialClasses.filter(c => c.date === selectedDateStr)
     }, [date, initialClasses])
 
+    // 선택된 날짜의 예약 요청 내역 필터링 (pending 상태만)
+    const requestsByDate = useMemo(() => {
+        const selectedDateStr = date ? format(date, 'yyyy-MM-dd') : null
+        return userRequests.filter(r => r.date === selectedDateStr && r.status === 'pending')
+    }, [date, userRequests])
+
     const isClassType = (d: Date, type: string) => {
         const dStr = format(d, 'yyyy-MM-dd')
         return initialClasses.some(c => c.date === dStr && c.type === type)
@@ -101,6 +123,12 @@ export default function ClassCalendarView({
     const hasClasses = (day: Date) => {
         const dayStr = format(day, 'yyyy-MM-dd')
         return initialClasses.some(cls => cls.date === dayStr)
+    }
+
+    // 해당 날짜에 사용자의 수업 요청이 있는지 확인
+    const hasRequests = (day: Date) => {
+        const dayStr = format(day, 'yyyy-MM-dd')
+        return userRequests.some(r => r.date === dayStr && r.status === 'pending')
     }
 
     const getDayStyle = (day: Date) => {
@@ -176,6 +204,29 @@ export default function ClassCalendarView({
         else {
             toast.success('수업 개설 요청이 전송되었습니다. 관리자 승인 후 개설됩니다.')
             setRequestOpen(false)
+            router.refresh()
+        }
+    }
+
+    // 사용자의 수업 요청 취소 처리
+    const handleCancelRequest = async (requestId: string) => {
+        const confirmed = await confirm({
+            title: "요청 취소",
+            description: "이 수업 요청을 취소하시겠습니까?",
+            confirmText: "취소하기",
+            variant: "destructive",
+        })
+
+        if (!confirmed) return
+
+        setIsCancelling(requestId)
+        const result = await cancelMyClassRequest(requestId)
+        setIsCancelling(null)
+
+        if (result.error) {
+            toast.error(result.error)
+        } else {
+            toast.success('수업 요청이 취소되었습니다.')
             router.refresh()
         }
     }
@@ -265,6 +316,7 @@ export default function ClassCalendarView({
                                     const date = day.date
                                     const dStr = format(date, 'yyyy-MM-dd')
                                     const dayClasses = initialClasses.filter(c => c.date === dStr)
+                                    const dayHasRequests = userRequests.some(r => r.date === dStr && r.status === 'pending')
                                     const styleClass = getDayStyle(date)
                                       
                                     // Block Logic
@@ -300,6 +352,7 @@ export default function ClassCalendarView({
                                         <CalendarDayButton 
                                             {...props} 
                                             dayClasses={!block ? dayClasses : []} // Hide dots if blocked (though typically no classes if blocked)
+                                            hasRequest={!block && dayHasRequests} // 요청이 있는 날짜에 노란 점 표시
                                             className={cn(
                                                 props.className, 
                                                 block ? blockStyle : styleClass, 
@@ -333,6 +386,15 @@ export default function ClassCalendarView({
                                     </span>
                                 </div>
                              ))}
+                             {/* 예약 요청 범례 (요청이 하나라도 있을 때만 표시) */}
+                             {userRequests.length > 0 && (
+                                <div className="flex items-center gap-2 group cursor-default">
+                                    <div className="w-3 h-3 rounded-full bg-yellow-400 border-2 border-yellow-500 shadow-sm"></div>
+                                    <span className="text-xs font-semibold text-slate-500 group-hover:text-slate-700 transition-colors">
+                                        내 요청
+                                    </span>
+                                </div>
+                             )}
                         </div>
                     </CardContent>
                 </Card>
@@ -350,6 +412,86 @@ export default function ClassCalendarView({
                             {classesByDate.length}개의 일정
                         </Badge>
                     </div>
+
+                    {/* 내가 요청한 수업 목록 - 예정된 수업보다 위에 표시 */}
+                    {requestsByDate.length > 0 && (
+                        <div className="space-y-3">
+                            <div className="flex items-center gap-2 px-2">
+                                <div className="w-2 h-2 rounded-full bg-yellow-400 border border-yellow-500"></div>
+                                <h4 className="text-sm font-bold text-slate-600">내가 요청한 수업</h4>
+                                <Badge variant="secondary" className="bg-yellow-50 text-yellow-700 border-yellow-200 text-xs px-2 py-0.5">
+                                    승인 대기 {requestsByDate.length}건
+                                </Badge>
+                            </div>
+                            {requestsByDate.map((req) => (
+                                <Card key={req.id} className="overflow-hidden border-none shadow-md ring-1 ring-yellow-200/60 bg-yellow-50/30">
+                                    <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-linear-to-b from-yellow-400 to-amber-500"></div>
+                                    <div className="p-4 pl-6 flex flex-col gap-3">
+                                        <div className="flex justify-between items-start">
+                                            <div className="flex flex-col gap-1">
+                                                <div className="flex items-center gap-2 mb-1">
+                                                    <Badge variant="outline" className={cn(
+                                                        "border-0 px-2 py-0.5 font-bold uppercase tracking-wider text-[10px]",
+                                                        CLASS_BG_COLORS[req.type as keyof typeof CLASS_BG_COLORS] || CLASS_BG_COLORS.default
+                                                    )}>
+                                                        {CLASS_TYPES[req.type as keyof typeof CLASS_TYPES] || req.type}
+                                                    </Badge>
+                                                    <Badge variant="outline" className="border-yellow-300 bg-yellow-100 text-yellow-700 text-[10px] px-2 py-0.5 font-bold">
+                                                        승인 대기
+                                                    </Badge>
+                                                </div>
+                                                <span className="font-bold text-base text-slate-800 leading-tight">
+                                                    {CLASS_TYPES[req.type as keyof typeof CLASS_TYPES] || req.type} 요청
+                                                </span>
+                                            </div>
+                                            <Button
+                                                onClick={() => handleCancelRequest(req.id)}
+                                                disabled={isCancelling === req.id}
+                                                size="sm"
+                                                variant="outline"
+                                                className="rounded-full px-4 font-semibold border-red-200 text-red-500 hover:bg-red-50 hover:text-red-600 hover:border-red-300 transition-all"
+                                            >
+                                                {isCancelling === req.id ? (
+                                                    <><Loader2 className="w-3 h-3 mr-1 animate-spin" /> 취소 중</>
+                                                ) : (
+                                                    <><X className="w-3 h-3 mr-1" /> 요청 취소</>
+                                                )}
+                                            </Button>
+                                        </div>
+                                        <div className="flex flex-wrap items-center gap-2 md:gap-4 text-sm text-slate-500 bg-white/60 p-2.5 md:p-3 rounded-xl border border-yellow-100">
+                                            <div className="flex items-center gap-1.5 font-medium">
+                                                <Clock className="w-4 h-4 text-yellow-500" />
+                                                {req.time_slot}
+                                            </div>
+                                            {req.location && (
+                                                <>
+                                                    <div className="w-px h-3 bg-slate-300"></div>
+                                                    <div className="flex items-center gap-1.5">
+                                                        <MapPin className="w-4 h-4 text-slate-400" />
+                                                        <span className="truncate">{req.location}</span>
+                                                    </div>
+                                                </>
+                                            )}
+                                            {req.participants > 0 && (
+                                                <>
+                                                    <div className="w-px h-3 bg-slate-300"></div>
+                                                    <div className="flex items-center gap-1.5">
+                                                        <Users className="w-4 h-4 text-slate-400" />
+                                                        {req.participants}명
+                                                    </div>
+                                                </>
+                                            )}
+                                        </div>
+                                        {req.user_instructions && (
+                                            <p className="text-xs text-slate-500 bg-white/40 rounded-lg px-3 py-2 border border-slate-100">
+                                                💬 {req.user_instructions}
+                                            </p>
+                                        )}
+                                    </div>
+                                </Card>
+                            ))}
+                        </div>
+                    )}
 
                     {classesByDate.length > 0 ? (
                         <div className="space-y-4">
@@ -486,6 +628,8 @@ export default function ClassCalendarView({
                             </Button>
                         </div>
                     )}
+
+
                 </div>
             </div>
 

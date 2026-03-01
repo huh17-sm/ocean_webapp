@@ -446,7 +446,7 @@ export default function AdminAvailabilityCalendar({
                             }}
                         />
 
-                        <div className="flex justify-center mt-8 gap-6">
+                        <div className="flex justify-center mt-8 gap-6 flex-wrap">
                              {(['pool', 'theory', 'training'] as const).map((type) => (
                                 <div key={type} className="flex items-center gap-2 group cursor-default">
                                     <div className={cn(
@@ -458,6 +458,15 @@ export default function AdminAvailabilityCalendar({
                                     </span>
                                 </div>
                              ))}
+                             {/* 수업 요청 범례 (요청이 하나라도 있을 때만 표시) */}
+                             {pendingRequestDates.length > 0 && (
+                                <div className="flex items-center gap-2 group cursor-default">
+                                    <div className="w-3 h-3 rounded-full bg-amber-400 border-2 border-amber-500 shadow-sm"></div>
+                                    <span className="text-xs font-semibold text-slate-500 group-hover:text-slate-700 transition-colors">
+                                        수업 요청
+                                    </span>
+                                </div>
+                             )}
                         </div>
                     </CardContent>
                 </Card>

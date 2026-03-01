@@ -41,7 +41,15 @@ export function UpcomingClassDialog({ reservation, isOpen, onClose }: UpcomingCl
   let refundMessage = ''
   let canCancel = true
 
-  if (classDate < now) {
+  // 출석 완료된 예약은 취소 불가
+  if (reservation.status === 'attended') {
+    canCancel = false
+    refundMessage = '출석 완료된 수업은 취소할 수 없습니다.'
+  // 관리자가 수업 완료 처리한 경우 취소 불가
+  } else if (classInfo.is_completed) {
+    canCancel = false
+    refundMessage = '완료 처리된 수업은 취소할 수 없습니다.'
+  } else if (classDate < now) {
     canCancel = false
     refundMessage = '이미 지난 수업은 취소할 수 없습니다.'
   } else if (diffDays <= REFUND_POLICY.SAME_DAY.daysBefore) {
@@ -175,7 +183,7 @@ export function UpcomingClassDialog({ reservation, isOpen, onClose }: UpcomingCl
               className="w-full sm:w-auto flex-1 opacity-50 cursor-not-allowed"
               disabled
             >
-              취소 불가 (당일 또는 지난 수업)
+              취소 불가
             </Button>
           )}
           <Button
